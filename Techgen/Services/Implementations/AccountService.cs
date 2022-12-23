@@ -15,9 +15,10 @@ namespace Techgen.Services.Implementations
         private readonly IUserRepository _userRepository;
         private readonly ILogger<AccountService> _logger;
 
-        public AccountService(IUserRepository userRepository)
+        public AccountService(IUserRepository userRepository, ILogger<AccountService> logger)
         {
             _userRepository = userRepository;
+            _logger = logger;
         }
 
         public async Task<IBaseResponse<ClaimsIdentity>> Register(RegisterModel model)
