@@ -9,30 +9,17 @@ namespace Techgen.DAL.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        private readonly IMongoCollection<User> users;
+        private readonly IMongoCollection<ApplicationUser> users;
 
         public UserRepository(IMongoDatabase mongoDatabase)
         {
-            users = mongoDatabase.GetCollection<User>("Users");
+            users = mongoDatabase.GetCollection<ApplicationUser>("Users");
         }
 
-        public async Task Create(User user) =>      
-            await users.InsertOneAsync(user);
-         
-        public async Task Delete(string id) =>
-            await users.DeleteOneAsync(x => x.Id == id);
-
-        public async Task<User> Get(string id) =>                 
-            await users.Find(x => x.Id == id).FirstOrDefaultAsync();
-
-        public async Task<User> FindUser(string userEmail) =>
-            await users.Find(x => x.Email == userEmail).FirstOrDefaultAsync();
-
-        public async Task<List<User>> GetAll() =>
+        public async Task<List<ApplicationUser>> GetAll() =>
             await users.Find(_ => true).ToListAsync();
 
-        public async Task Update(string id, User user) =>
-            await users.ReplaceOneAsync(x => x.Id == id, user);
-       
+        public List<string> GetAllRecovery() =>
+            users.AsQueryable().Select(x => x.RecoveryCode).ToList();
     }
 }

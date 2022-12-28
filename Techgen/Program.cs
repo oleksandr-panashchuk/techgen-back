@@ -1,9 +1,15 @@
+using AspNetCore.Identity.MongoDbCore.Infrastructure;
+using EmailService;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 using MongoDB.Driver.Core.Configuration;
 using System.Collections;
-using System.Configuration;
+using System.Text;
 using System.Xml.Linq;
 using Techgen;
 using Techgen.Domain.DB;
@@ -12,31 +18,69 @@ using Techgen.Domain.Entity;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddAuthorization();
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
+ConfigurationManager configuration = builder.Configuration;
+IServiceProvider serviceProvider = builder.Services.BuildServiceProvider();
+
+// Adding Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer(options =>
     {
-        options.LoginPath = new Microsoft.AspNetCore.Http.PathString("/Account/Login");
-        options.AccessDeniedPath = new Microsoft.AspNetCore.Http.PathString("/Account/Login");
+        options.SaveToken = true;
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new TokenValidationParameters()
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
     });
 
-builder.Services.AddMvc();
-builder.Services.AddControllers();
-builder.Services.AddRazorPages();
-
-builder.Services.Configure<DatabaseSettings>(builder.Configuration.GetSection("DatabaseSettings"));
+//Database
+var databaseSettings = builder.Configuration.GetSection(nameof(DatabaseSettings)).Get<DatabaseSettings>();
 
 builder.Services.AddSingleton<IMongoDatabase>(sp =>
 {
-    var databaseSettings = sp.GetRequiredService<IOptions<DatabaseSettings>>().Value;
     var mongoDbClient = new MongoClient(databaseSettings.ConnectionString);
     var mongoDb = mongoDbClient.GetDatabase(databaseSettings.DatabaseName);
 
     return mongoDb;
 });
 
+//Identity
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
+        .AddMongoDbStores<ApplicationUser, ApplicationRole, Guid>
+        (
+            databaseSettings.ConnectionString, databaseSettings.DatabaseName
+        );
+
+//EmailService
+var emailConfig = configuration
+        .GetSection("EmailConfiguration")
+        .Get<EmailConfiguration>();
+builder.Services.AddSingleton(emailConfig);
+
+builder.Services.Configure<FormOptions>(o => {
+    o.ValueLengthLimit = int.MaxValue;
+    o.MultipartBodyLengthLimit = int.MaxValue;
+    o.MemoryBufferThreshold = int.MaxValue;
+});
+
+//Initialize repository and services
 builder.Services.InitializeRepositories();
 builder.Services.InitializeServices();
+
+builder.Services.AddMvc();
+builder.Services.AddControllers();
+builder.Services.AddRazorPages();
+
+builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
@@ -54,8 +98,6 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapRazorPages();
-
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
@@ -63,4 +105,6 @@ app.UseEndpoints(endpoints =>
 });
 
 app.Run();
+
+
 

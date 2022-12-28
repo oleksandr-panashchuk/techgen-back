@@ -1,4 +1,5 @@
-﻿using Techgen.DAL.Interfaces;
+﻿using EmailService;
+using Techgen.DAL.Interfaces;
 using Techgen.DAL.Repositories;
 using Techgen.Domain.Entity;
 using Techgen.Services.Implementations;
@@ -16,6 +17,7 @@ namespace Techgen
         public static void InitializeServices(this IServiceCollection services)
         {
             services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<IEmailSender, EmailSender>();
         }
     }
 }
