@@ -217,7 +217,7 @@ namespace Techgen.Services.Implementations
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"[SendMessageWithRecoveryCode]: {ex.Message}");
+                _logger.LogError(ex, $"[SendEmailNewPassword]: {ex.Message}");
                 return new BaseResponse<ApplicationUser>()
                 {
                     Description = ex.Message,
