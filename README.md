@@ -1,6 +1,6 @@
 # techgen back
 
-http://myserver.com/Account/Register
+http://myserver.com/Account/Register \n
 Body: {"Email": "username@gmail.com", "Password": "GG12_3fgaaf", "PasswordConfirm": "GG123_fgaaf"}
 
 http://myserver.com/Account/Login
