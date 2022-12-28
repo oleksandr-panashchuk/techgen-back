@@ -1,5 +1,4 @@
-﻿using EmailService;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -11,6 +10,7 @@ using Techgen.Domain.Enum;
 using Techgen.Domain.Helpers;
 using Techgen.Domain.Models.Account;
 using Techgen.Domain.Response;
+using Techgen.Services.EmailService;
 using Techgen.Services.Interfaces;
 
 namespace Techgen.Services.Implementations

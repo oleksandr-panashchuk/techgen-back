@@ -1,5 +1,4 @@
 using AspNetCore.Identity.MongoDbCore.Infrastructure;
-using EmailService;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
@@ -14,6 +13,7 @@ using System.Xml.Linq;
 using Techgen;
 using Techgen.Domain.DB;
 using Techgen.Domain.Entity;
+using Techgen.Services.EmailService;
 
 
 var builder = WebApplication.CreateBuilder(args);

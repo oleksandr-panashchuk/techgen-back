@@ -1,7 +1,7 @@
-﻿using EmailService;
-using Techgen.DAL.Interfaces;
+﻿using Techgen.DAL.Interfaces;
 using Techgen.DAL.Repositories;
 using Techgen.Domain.Entity;
+using Techgen.Services.EmailService;
 using Techgen.Services.Implementations;
 using Techgen.Services.Interfaces;
 

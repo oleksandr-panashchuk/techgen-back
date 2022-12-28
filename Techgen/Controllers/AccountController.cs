@@ -7,7 +7,6 @@ using System.Security.Claims;
 using Techgen.Services.Implementations;
 using Techgen.Services.Interfaces;
 using Techgen.Domain.Models.Account;
-using EmailService;
 using Techgen.Domain.Entity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -35,7 +34,7 @@ namespace Techgen.Controllers
 
         [HttpPost]
         [Route("Login")]
-        public async Task<IActionResult> Login(LoginModel model)
+        public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
             var response = await _accountService.Login(model);
             if (response.StatusCode == Domain.Enum.StatusCode.OK)
@@ -51,7 +50,7 @@ namespace Techgen.Controllers
 
         [HttpPost]
         [Route("Register")]
-        public async Task<IActionResult> Register(RegisterModel model)
+        public async Task<IActionResult> Register([FromBody]RegisterModel model)
         {
             var response = await _accountService.Register(model);
             if (response.StatusCode == Domain.Enum.StatusCode.OK)
