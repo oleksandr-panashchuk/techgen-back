@@ -1,6 +1,5 @@
 ﻿using Humanizer;
 using MongoDB.Driver;
-
 using System.Linq;
 using System.Reflection;
 using Techgen.DAL.Abstract;

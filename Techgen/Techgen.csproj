@@ -14,11 +14,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Domain\DB\" />
+    <ProjectReference Include="..\Techgen.DAL\Techgen.DAL.csproj" />
+    <ProjectReference Include="..\Techgen.Services\Techgen.Services.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Techgen.DAL\Techgen.DAL.csproj" />
+    <Folder Include="Новая папка\" />
   </ItemGroup>
 
 </Project>
