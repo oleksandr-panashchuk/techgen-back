@@ -148,20 +148,13 @@ namespace Techgen.Services.Implementations
             return token;
         }
 
-        public async Task<IBaseResponse<ApplicationUser>> SendEmailNewRecoveryCode(string email, string recoveryCode)
+        public async Task<IBaseResponse<ApplicationUser>> CheckRecoveryCode(string email, string recoveryCode)
         {
             try
             {
                 var user = await _userManager.FindByEmailAsync(email);
                 if (user != null && user.RecoveryCode == recoveryCode)
-                {
-                    string newRecoveryCode = DigitRecoveryHelper.GenereteCodeRecovery(_userRepository.GetAllRecovery());                
-                    user.RecoveryCode = newRecoveryCode;
-                    await _userManager.UpdateAsync(user);
-
-                    var message = new Message(new string[] { email }, "TECHGEN your new recovery code", $"Your new recovery code {newRecoveryCode}", null);
-                    await _emailSender.SendEmailAsync(message);
-
+                {                  
                     return new BaseResponse<ApplicationUser>()
                     {   
                         Data = user,
@@ -170,12 +163,12 @@ namespace Techgen.Services.Implementations
                 }
                 else
                 {
-                    throw new Exception("Could not send email with new recovery code ");
+                    throw new Exception("Recovery code is incorrect");
                 }
             }
             catch(Exception ex)
             {
-                _logger.LogError(ex, $"[SendMessageWithRecoveryCode]: {ex.Message}");
+                _logger.LogError(ex, $"[CheckRecoveryCode]: {ex.Message}");
                 return new BaseResponse<ApplicationUser>()
                 {
                     Description = ex.Message,
@@ -184,15 +177,13 @@ namespace Techgen.Services.Implementations
             }        
         }
 
-        //Check if the new revocery code which was sending to email is equal and generate new password
-        public async Task<IBaseResponse<ApplicationUser>> SendEmailNewPassword(string email, string newRecoveryCode)
+        public async Task<IBaseResponse<ApplicationUser>> ChangePassword(string email, string newPassword)
         {
             try
             {
                 var user = await _userManager.FindByEmailAsync(email);
-                if (user != null && user.RecoveryCode == newRecoveryCode)
+                if (user != null)
                 {
-                    string newPassword = CreatePasswordHelper.GeneratePassword();
                     user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, newPassword);
                     var result = await _userManager.UpdateAsync(user);
 
@@ -201,7 +192,7 @@ namespace Techgen.Services.Implementations
                         throw new Exception("Failed to change password.");
                     }
 
-                    var message = new Message(new string[] { email }, "TECHGEN your new password", $"Your your new password {newPassword}", null);
+                    var message = new Message(new string[] { email }, "TECHGEN your new password", $"Your password was changed successful", null);
                     await _emailSender.SendEmailAsync(message);
                     
                     return new BaseResponse<ApplicationUser>()
@@ -217,7 +208,7 @@ namespace Techgen.Services.Implementations
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"[SendEmailNewPassword]: {ex.Message}");
+                _logger.LogError(ex, $"[ChangePassword]: {ex.Message}");
                 return new BaseResponse<ApplicationUser>()
                 {
                     Description = ex.Message,

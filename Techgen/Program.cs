@@ -3,11 +3,14 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 using MongoDB.Driver.Core.Configuration;
 using System.Collections;
+using System.Configuration;
 using System.Text;
 using System.Xml.Linq;
 using Techgen;
@@ -15,11 +18,9 @@ using Techgen.Domain.DB;
 using Techgen.Domain.Entity;
 using Techgen.Services.EmailService;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
-ConfigurationManager configuration = builder.Configuration;
-IServiceProvider serviceProvider = builder.Services.BuildServiceProvider();
+IConfiguration configuration = builder.Configuration;
 
 // Adding Authentication
 builder.Services.AddAuthentication(options =>
@@ -42,24 +43,6 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-//Database
-var databaseSettings = builder.Configuration.GetSection(nameof(DatabaseSettings)).Get<DatabaseSettings>();
-
-builder.Services.AddSingleton<IMongoDatabase>(sp =>
-{
-    var mongoDbClient = new MongoClient(databaseSettings.ConnectionString);
-    var mongoDb = mongoDbClient.GetDatabase(databaseSettings.DatabaseName);
-
-    return mongoDb;
-});
-
-//Identity
-builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
-        .AddMongoDbStores<ApplicationUser, ApplicationRole, Guid>
-        (
-            databaseSettings.ConnectionString, databaseSettings.DatabaseName
-        );
-
 //EmailService
 var emailConfig = configuration
         .GetSection("EmailConfiguration")
@@ -72,6 +55,20 @@ builder.Services.Configure<FormOptions>(o => {
     o.MemoryBufferThreshold = int.MaxValue;
 });
 
+//Database
+var databaseSettings = builder.Configuration.GetSection(nameof(DatabaseSettings)).Get<DatabaseSettings>();
+var mongoDbClient = new MongoClient(databaseSettings.ConnectionString);
+var mongoDb = mongoDbClient.GetDatabase(databaseSettings.DatabaseName);
+
+builder.Services.AddSingleton<IMongoDatabase>(mongoDb);
+
+//Identity
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
+        .AddMongoDbStores<ApplicationUser, ApplicationRole, Guid>
+        (
+            databaseSettings.ConnectionString, databaseSettings.DatabaseName
+        );
+
 //Initialize repository and services
 builder.Services.InitializeRepositories();
 builder.Services.InitializeServices();
@@ -83,6 +80,10 @@ builder.Services.AddRazorPages();
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
+
+var scope = app.Services.CreateScope();
+var service = scope.ServiceProvider;
+DataSeed.SeedData(mongoDb, service);
 
 if (!app.Environment.IsDevelopment())
 {

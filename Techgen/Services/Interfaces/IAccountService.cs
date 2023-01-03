@@ -11,7 +11,7 @@ namespace Techgen.Services.Interfaces
     {
         public Task<IBaseResponse<IdentityUser>> Register(RegisterModel model);
         public Task<IBaseResponse<JwtSecurityToken>> Login(LoginModel model);
-        public Task<IBaseResponse<ApplicationUser>> SendEmailNewRecoveryCode(string email, string recoveryCode);
-        public Task<IBaseResponse<ApplicationUser>> SendEmailNewPassword(string email, string newRecoveryCode);
+        public Task<IBaseResponse<ApplicationUser>> CheckRecoveryCode(string email, string recoveryCode);
+        public Task<IBaseResponse<ApplicationUser>> ChangePassword(string email, string newRecoveryCode);
     }
 }

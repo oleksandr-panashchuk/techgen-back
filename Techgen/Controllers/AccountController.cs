@@ -57,31 +57,32 @@ namespace Techgen.Controllers
             {
                 return Ok("User created successfully.");
             }
-            return new BadRequestObjectResult(new { Message = response.Data });
+            return new BadRequestObjectResult(new { Message = response.Description });
         }
 
-        [Route("SendRecoveryCode")]
+        [Route("CheckRecoveryCode")]
         [HttpPost]
-        public async Task<IActionResult> SendRecoveryCode([FromQuery] string email, [FromQuery] string recoveryCode)
+        public async Task<IActionResult> CheckRecoveryCode([FromQuery] string email, [FromQuery] string recoveryCode)
         {
-            var response = await _accountService.SendEmailNewRecoveryCode(email, recoveryCode);
+            var response = await _accountService.CheckRecoveryCode(email, recoveryCode);
             if (response.StatusCode == Domain.Enum.StatusCode.OK)
             {
-                return Ok(new { Message = "Send message with new recovery code successfully" });
+                return Ok(new { Message = "Recovery code is correct" });
             }
-            return new BadRequestObjectResult(new { Message = "Send messagen with new recovery failed" });
+            return new BadRequestObjectResult(new { Message = response.Description });
         }
 
+         
         [Route("ChangePassword")]
         [HttpPost]
-        public async Task<IActionResult> ChangePassword([FromQuery] string email, [FromQuery] string recoveryCode)
+        public async Task<IActionResult> ChangePassword([FromQuery] string email, [FromQuery] string newPassword)
         {
-            var response = await _accountService.SendEmailNewPassword(email, recoveryCode);
+            var response = await _accountService.ChangePassword(email, newPassword);
             if (response.StatusCode == Domain.Enum.StatusCode.OK)
             {
                 return Ok(new { Message = "Change password successfully" });
             }
-            return new BadRequestObjectResult(new { Message = "Change password failed" });
+            return new BadRequestObjectResult(new { Message = response.Description });
         }
 
         [Authorize(Roles = "Admin")]
