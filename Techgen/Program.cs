@@ -6,6 +6,8 @@ using System.Collections;
 using System.Configuration;
 using System.Xml.Linq;
 using Techgen;
+using Techgen.DAL;
+using Techgen.DAL.Abstract;
 using Techgen.Domain.DB;
 using Techgen.Domain.Entity;
 
@@ -34,6 +36,7 @@ builder.Services.AddSingleton<IMongoDatabase>(sp =>
 
     return mongoDb;
 });
+builder.Services.AddScoped<IDataContext>(provider => provider.GetService<DataContext>());
 
 builder.Services.InitializeRepositories();
 builder.Services.InitializeServices();

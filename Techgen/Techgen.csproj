@@ -13,4 +13,12 @@
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Domain\DB\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Techgen.DAL\Techgen.DAL.csproj" />
+  </ItemGroup>
+
 </Project>
