@@ -4,10 +4,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using Techgen.Services.Implementations;
 using Techgen.Services.Interfaces;
-using Techgen.Domain.Models.Account;
-
+using System.Net;
+using Techgen.Models.RequestModels;
 
 namespace Techgen.Controllers
 {
@@ -24,12 +23,12 @@ namespace Techgen.Controllers
 
         [HttpPost]
         [Route("Register")]
-        public async Task<IActionResult> Register([FromBody]RegisterModel model)
+        public async Task<IActionResult> Register([FromBody]RegisterRequestModel model)
         {
             if (ModelState.IsValid)
             {
                 var response = await _accountService.Register(model);
-                if (response.StatusCode == Domain.Enum.StatusCode.OK)
+                if (response.StatusCode == HttpStatusCode.OK)
                 {
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
                         new ClaimsPrincipal(response.Data));
@@ -43,12 +42,12 @@ namespace Techgen.Controllers
        
         [HttpPost]
         [Route("Login")]
-        public async Task<IActionResult> Login([FromBody]LoginModel model)
+        public async Task<IActionResult> Login([FromBody]LoginRequestModel model)
         {
             if (ModelState.IsValid)
             {
                 var response = await _accountService.Login(model);
-                if (response.StatusCode == Domain.Enum.StatusCode.OK)
+                if (response.StatusCode == HttpStatusCode.OK)
                 {
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
                         new ClaimsPrincipal(response.Data));

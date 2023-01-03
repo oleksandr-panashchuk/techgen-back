@@ -36,7 +36,7 @@ builder.Services.AddSingleton<IMongoDatabase>(sp =>
 
     return mongoDb;
 });
-builder.Services.AddScoped<IDataContext>(provider => provider.GetService<DataContext>());
+builder.Services.AddScoped<IDataContext, DataContext>();
 
 builder.Services.InitializeRepositories();
 builder.Services.InitializeServices();
