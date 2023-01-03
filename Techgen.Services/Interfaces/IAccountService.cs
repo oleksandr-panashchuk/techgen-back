@@ -1,4 +1,6 @@
-﻿using System.Security.Claims;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Techgen.Domain.Entity;
 using Techgen.Models.RequestModels;
 using Techgen.Models.ResponseModels.Base;
 
@@ -6,7 +8,9 @@ namespace Techgen.Services.Interfaces
 {
     public interface IAccountService
     {
-        public Task<IBaseResponse<ClaimsIdentity>> Register(RegisterRequestModel model);
-        public Task<IBaseResponse<ClaimsIdentity>> Login(LoginRequestModel model);
+        public Task<IBaseResponse<User>> Register(RegisterRequestModel model);
+        public Task<IBaseResponse<JwtSecurityToken>> Login(LoginRequestModel model);
+        public Task<IBaseResponse<User>> CheckRecoveryCode(string email, string recoveryCode);
+        public Task<IBaseResponse<User>> ChangePassword(string email, string newPassword);
     }
 }

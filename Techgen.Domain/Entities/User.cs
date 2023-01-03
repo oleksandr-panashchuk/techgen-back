@@ -21,6 +21,12 @@ namespace Techgen.Domain.Entity
         [BsonElement("Role")]
         public string Role { get; set; }
 
+        [BsonElement("RecoveryCode")]
+        public string RecoveryCode { get; set; }
+
+        [BsonElement("DigitId")]
+        public string DigitId { get; set; }
+
         public DateTime CreatedAt => Id.CreationTime;
     }
 }

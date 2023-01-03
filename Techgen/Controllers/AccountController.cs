@@ -7,6 +7,7 @@ using System.Security.Claims;
 using Techgen.Services.Interfaces;
 using System.Net;
 using Techgen.Models.RequestModels;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Techgen.Controllers
 {
@@ -23,48 +24,44 @@ namespace Techgen.Controllers
 
         [HttpPost]
         [Route("Register")]
-        public async Task<IActionResult> Register([FromBody]RegisterRequestModel model)
+        public async Task<IActionResult> Register([FromBody] RegisterRequestModel model)
         {
-            if (ModelState.IsValid)
+            var response = await _accountService.Register(model);
+            if (response.StatusCode == HttpStatusCode.OK)
             {
-                var response = await _accountService.Register(model);
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
-                        new ClaimsPrincipal(response.Data));
-
-                    return Ok(new { Message = "User registration successful" });
-                }
-                ModelState.AddModelError("", response.Description);
+                return Ok("User created successfully.");
             }
-            return new BadRequestObjectResult(new { Message = "User registration failed" });
-        }
-       
-        [HttpPost]
-        [Route("Login")]
-        public async Task<IActionResult> Login([FromBody]LoginRequestModel model)
-        {
-            if (ModelState.IsValid)
-            {
-                var response = await _accountService.Login(model);
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
-                        new ClaimsPrincipal(response.Data));
-
-                    return Ok(new { Message = "User login successful" });
-                }
-                ModelState.AddModelError("", response.Description);
-            }
-            return new BadRequestObjectResult(new { Message = "User login failed" });
+            return new BadRequestObjectResult(new { Message = response.Description });
         }
 
         [HttpPost]
-        [Route("Logout")]
-        public async Task<IActionResult> Logout()
+        [Route("Login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequestModel model)
         {
-            await HttpContext.SignOutAsync();
-            return Ok(new { Message = "You are logged out" });
+            var response = await _accountService.Login(model);
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                return Ok(new
+                {
+                    token = new JwtSecurityTokenHandler().WriteToken(response.Data),
+                    expiration = response.Data.ValidTo
+                });
+            }
+            return Unauthorized();
         }
+
+        [HttpPost]
+        [Route("ChangePassword")]
+        public async Task<IActionResult> ChangePassword([FromQuery] string email, [FromQuery] string newPassword)
+        {
+            var response = await _accountService.ChangePassword(email, newPassword);
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                return Ok(new { Message = "Change password successfully" });
+            }
+            return new BadRequestObjectResult(new { Message = response.Description });
+        }
+
     }
 }

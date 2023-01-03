@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace Techgen.Common.Utilities
 {
-    public class HashUtility
+    public static class HashUtility
     {
-        public string GetHash(string inputString)
+        public static string GetHash(string inputString)
         {
             if (string.IsNullOrEmpty(inputString))
                 return "";
