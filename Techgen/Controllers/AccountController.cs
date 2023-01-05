@@ -23,7 +23,7 @@ namespace Techgen.Controllers
         }
 
         [HttpPost]
-        [Route("Register")]
+        [Route("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestModel model)
         {
             var response = await _accountService.Register(model);
@@ -35,24 +35,45 @@ namespace Techgen.Controllers
         }
 
         [HttpPost]
-        [Route("Login")]
+        [Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestModel model)
         {
             var response = await _accountService.Login(model);
 
             if (response.StatusCode == HttpStatusCode.OK)
             {
-                return Ok(new
-                {
-                    token = new JwtSecurityTokenHandler().WriteToken(response.Data),
-                    expiration = response.Data.ValidTo
-                });
+                return Ok(response.Data);
             }
             return Unauthorized();
         }
 
+        [Authorize]
         [HttpPost]
-        [Route("ChangePassword")]
+        [Route("revoke")]
+        public IActionResult Logout()
+        {
+            var response = _accountService.Logout();
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                return NoContent();
+            }
+            return BadRequest(response.Description);
+        }
+
+        [Route("checkRecoveryCode")]
+        [HttpPost]
+        public async Task<IActionResult> CheckRecoveryCode([FromQuery] string email, [FromQuery] string recoveryCode)
+        {
+            var response = await _accountService.CheckRecoveryCode(email, recoveryCode);
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                return Ok(response.Data);
+            }
+            return new BadRequestObjectResult(response.Description);
+        }
+
+        [HttpPost]
+        [Route("changePassword")]
         public async Task<IActionResult> ChangePassword([FromQuery] string email, [FromQuery] string newPassword)
         {
             var response = await _accountService.ChangePassword(email, newPassword);
