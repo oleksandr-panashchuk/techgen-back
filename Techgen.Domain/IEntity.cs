@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using Realms;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Techgen.Domain
 {
-    public interface IEntity
+    public class IEntity : RealmObject
     {
         [BsonId]
         [BsonRepresentation(BsonType.String)]

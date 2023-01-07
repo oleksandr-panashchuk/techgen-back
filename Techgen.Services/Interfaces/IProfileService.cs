@@ -13,8 +13,8 @@ namespace Techgen.Services.Interfaces
 {
     public interface IProfileService
     {
-        public IBaseResponse<Profile> Edit(ProfileRequestModel model);
-        public IBaseResponse<Profile> Create(User user);
-        public IBaseResponse<ProfileResponseModel> Get(string id);
+        Task<IBaseResponse<Profile>> Edit(ProfileRequestModel model);
+        Task<IBaseResponse<Profile>> Create(User user);
+        Task<IBaseResponse<ProfileResponseModel>> Get(string id);
     }
 }
