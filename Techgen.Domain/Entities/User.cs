@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.ComponentModel.DataAnnotations;
+using Techgen.Domain.Entities;
 using Techgen.Domain.Extentions;
 
 namespace Techgen.Domain.Entity
@@ -27,6 +28,9 @@ namespace Techgen.Domain.Entity
         [BsonElement("DigitId")]
         public string DigitId { get; set; }
 
-        public DateTime CreatedAt => Id.CreationTime;
+        public string? RefreshToken { get; set; }
+        public DateTime RefreshTokenExpiryTime { get; set; }
+
+        public DateTime CreatedAt => Id.CreationTime;       
     }
 }

@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,6 +21,7 @@ using Techgen.Domain.Entity;
 using Techgen.EmailService;
 using Techgen.Models.Enum;
 using Techgen.Models.RequestModels;
+using Techgen.Models.ResponseModels;
 using Techgen.Models.ResponseModels.Base;
 using Techgen.Services.Interfaces;
 using static MongoDB.Libmongocrypt.CryptContext;
@@ -32,14 +34,19 @@ namespace Techgen.Services.Services
         private readonly ILogger<AccountService> _logger;
         private readonly IEmailSender _emailSender;
         private readonly IJWTService _jwtService;
+        private readonly IConfiguration _configuration;
+        private readonly IProfileService _profileService;
 
         public AccountService(IUnitOfWork unitOfWork, ILogger<AccountService> logger,
-            IEmailSender emailSender, IJWTService jwtService)
+            IEmailSender emailSender, IJWTService jwtService, IConfiguration configuration, 
+            IProfileService profileService)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _emailSender = emailSender;
             _jwtService = jwtService;
+            _configuration = configuration;
+            _profileService = profileService;
         }
 
         public async Task<IBaseResponse<User>> Register(RegisterRequestModel model)
@@ -62,10 +69,11 @@ namespace Techgen.Services.Services
                     Role = Role.User.ToString(),
                     Password = HashUtility.GetHash(model.Password),
                     DigitId = $"{DigitIdUtility.GetDigitID:00000000}",
-                    RecoveryCode = RecoveryCodeUtility.GenereteCodeRecovery()
+                    RecoveryCode = RecoveryCodeUtility.GenereteRecoveryCode()
                 };
 
-                await _unitOfWork.Repository<User>().InsertOneAsync(user);               
+                await _unitOfWork.Repository<User>().InsertOneAsync(user);
+                _profileService.Create(user);
 
                 //Send email
                 var message = new Message(new string[] { $"{model.Email}" }, "TECHGEN account registration", $"Welcome to TECHGEN, your recovery code {user.RecoveryCode}", null);
@@ -89,14 +97,14 @@ namespace Techgen.Services.Services
             }
         }
 
-        public async Task<IBaseResponse<JwtSecurityToken>> Login(LoginRequestModel model)
+        public async Task<IBaseResponse<AuthenticatedResponse>> Login(LoginRequestModel model)
         {
             try
             {
                 var user = await _unitOfWork.Repository<User>().FindOneAsync(x => x.Email == model.Email);
                 if (user == null || user.Password != HashUtility.GetHash(model.Password))
                 {
-                    return new BaseResponse<JwtSecurityToken>()
+                    return new BaseResponse<AuthenticatedResponse>()
                     {
                         Description = "Invalid password"
                     };
@@ -109,20 +117,34 @@ namespace Techgen.Services.Services
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 };
 
+                var accessToken = _jwtService.GenerateAccessToken(authClaims);
+                var refreshToken = _jwtService.GenerateRefreshToken();
+
+                _ = int.TryParse(_configuration["JWT:RefreshTokenValidityInDays"], out int refreshTokenValidityInDays);
+
+                user.RefreshToken = refreshToken;
+                user.RefreshTokenExpiryTime = DateTime.Now.AddDays(refreshTokenValidityInDays);
+
+                _unitOfWork.Repository<User>().ReplaceOne(user);
+
                 //Send email
                 var message = new Message(new string[] { $"{model.Email}" }, "TECHGEN login in your account ", "Successful login", null);
                 await _emailSender.SendEmailAsync(message);
 
-                return new BaseResponse<JwtSecurityToken>()
+                return new BaseResponse<AuthenticatedResponse>()
                 {
-                    Data = _jwtService.GetToken(authClaims),
+                    Data = new AuthenticatedResponse
+                    {
+                        Token = accessToken,
+                        RefreshToken = refreshToken
+                    },
                     StatusCode = HttpStatusCode.OK
                 };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"[Login]: {ex.Message}");
-                return new BaseResponse<JwtSecurityToken>()
+                return new BaseResponse<AuthenticatedResponse>()
                 {
                     Description = ex.Message,
                     StatusCode = HttpStatusCode.InternalServerError
@@ -167,13 +189,13 @@ namespace Techgen.Services.Services
                 if (user != null)
                 {
                     user.Password = HashUtility.GetHash(newPassword);
+                    _unitOfWork.Repository<User>().ReplaceOne(user);
 
                     var message = new Message(new string[] { email }, "TECHGEN change password", $"Your password was changed successful", null);
                     await _emailSender.SendEmailAsync(message);
 
                     return new BaseResponse<User>()
                     {
-                        Data = user,
                         StatusCode = HttpStatusCode.OK
                     };
                 }
@@ -189,6 +211,26 @@ namespace Techgen.Services.Services
                 };
 
             }
+        }
+
+        public IBaseResponse<User> Logout()
+        {
+            string email = ClaimsPrincipal.Current.FindFirst(ClaimTypes.Email).Value;
+            var user = _unitOfWork.Repository<User>().FindOne(x => x.Email == email);
+            if (user == null)
+            {
+                return new BaseResponse<User>()
+                {
+                    StatusCode = HttpStatusCode.BadRequest
+                };
+            }
+            user.RefreshToken = null;
+            _unitOfWork.Repository<User>().ReplaceOne(user);
+
+            return new BaseResponse<User>()
+            {
+                StatusCode = HttpStatusCode.OK
+            };
         }
     }
 }

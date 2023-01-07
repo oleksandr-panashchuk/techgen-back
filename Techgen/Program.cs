@@ -11,8 +11,6 @@ using Techgen.DAL.Abstract;
 using Techgen.Domain.DB;
 using Techgen.EmailService;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 IConfiguration configuration = builder.Configuration;
