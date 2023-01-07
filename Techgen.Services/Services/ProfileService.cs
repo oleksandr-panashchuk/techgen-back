@@ -24,7 +24,7 @@ namespace Techgen.Services.Services
             _unitOfWork = unitOfWork;
         }
 
-        public IBaseResponse<Profile> Edit(ProfileRequestModel model)
+        public async Task<IBaseResponse<Profile>> Edit(ProfileRequestModel model)
         {
             var profile = _unitOfWork.Repository<Profile>().FindOne(x => x.Email == model.Email);
 
@@ -48,7 +48,7 @@ namespace Techgen.Services.Services
             };
         }
 
-        public IBaseResponse<Profile> Create(User user)
+        public async Task<IBaseResponse<Profile>> Create(User user)
         {
             var profile = _unitOfWork.Repository<Profile>().FindById(user.Id.ToString());
                         
@@ -76,7 +76,7 @@ namespace Techgen.Services.Services
                 StatusCode = HttpStatusCode.OK
             };
         }
-        public IBaseResponse<ProfileResponseModel> Get(string id)
+        public async Task<IBaseResponse<ProfileResponseModel>> Get(string id)
         {
             try
             {

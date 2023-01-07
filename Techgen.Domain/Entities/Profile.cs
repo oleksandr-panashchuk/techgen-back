@@ -1,13 +1,9 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Techgen.Domain.Entity;
-using System.ComponentModel.DataAnnotations;
 using Techgen.Domain.Extentions;
+using Realms;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Techgen.Domain.Entities
 {
@@ -21,8 +17,11 @@ namespace Techgen.Domain.Entities
         [BsonElement("Email")]
         public string Email { get; set; }
 
-        [BsonElement("Name")]
-        public string? Name { get; set; }
+        [BsonElement("FirstName")]
+        public string? FirstName { get; set; }
+
+        [BsonElement("LastName")]
+        public string? LastName { get; set; }
 
         [BsonElement("Age")]
         public int Age { get; set; }
@@ -34,5 +33,24 @@ namespace Techgen.Domain.Entities
         public string UserId { get; set; }
 
         public DateTime CreatedAt => Id.CreationTime;
+
+        #region Navigation properties
+        [Backlink("Profile")]
+        public User User { get; set; }
+        #endregion
+
+        #region Additional propeties
+        [NotMapped]
+        public string FullName
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(FirstName) && !string.IsNullOrEmpty(LastName))
+                    return $"{FirstName} {LastName}";
+                else
+                    return string.Empty;
+            }
+        }
+        #endregion
     }
 }
