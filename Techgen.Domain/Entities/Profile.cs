@@ -35,7 +35,7 @@ namespace Techgen.Domain.Entities
         public DateTime CreatedAt => Id.CreationTime;
 
         #region Navigation properties
-        [Backlink("Profile")]
+        [InverseProperty("Profile")]
         public User User { get; set; }
         #endregion
 

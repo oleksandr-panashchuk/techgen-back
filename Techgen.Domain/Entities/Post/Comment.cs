@@ -16,7 +16,6 @@ namespace Techgen.Domain.Entities.Post
     public class Comment : IEntity
     {
         [BsonId]
-        [PrimaryKey]
         [BsonRepresentation(BsonType.String)]
         public ObjectId Id { get; set; }
         
@@ -30,7 +29,7 @@ namespace Techgen.Domain.Entities.Post
 
         #region Navigation properties
 
-        public IList<Comment>? Answers { get; set; }
+        public ICollection<Comment>? Answers { get; set; }
 
         [Backlink("Comments")]
         public User User { get; set; }

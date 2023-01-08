@@ -38,7 +38,7 @@ namespace Techgen.Services.Services
 
             profile.Age = model.Age;
             profile.Country = model.Country;
-            profile.Name = model.Name;
+            //profile.Name = model.Name;
 
             _unitOfWork.Repository<Profile>().ReplaceOne(profile);
 
@@ -63,7 +63,7 @@ namespace Techgen.Services.Services
 
             profile = new Profile
             {   
-                Name = $"user{user.DigitId}",
+                //F = $"user{user.DigitId}",
                 Email = user.Email,
                 UserId = user.Id.ToString(),
             };
@@ -84,7 +84,7 @@ namespace Techgen.Services.Services
                     .AsQueryable().Select(x => new ProfileResponseModel()
                     {
                         Id = x.Id.ToString(),
-                        Name = x.Name,
+                        //Name = x.Name,
                         Age = x.Age,
                         Country = x.Country,
                     }).Single();
