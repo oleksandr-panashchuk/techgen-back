@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Techgen.Domain
 {
-    public class IEntity : RealmObject
+    public interface IEntity
     {
         [BsonId]
         [BsonRepresentation(BsonType.String)]

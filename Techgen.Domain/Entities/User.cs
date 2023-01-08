@@ -1,7 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using Realms;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Techgen.Domain.Entities;
 using Techgen.Domain.Entities.Post;
 using Techgen.Domain.Extentions;
@@ -41,13 +41,13 @@ namespace Techgen.Domain.Entity
         public DateTime CreatedAt => Id.CreationTime;
 
         #region Navigation properties
-        [Backlink("User")]
-        public IQueryable<Comment> Comments { get; set; }
+        [InverseProperty("User")]
+        public ICollection<Comment> Comments { get; set; }
 
-        [Backlink("User")]
-        public IQueryable<Post> Posts { get; set; }
+        [InverseProperty("User")]
+        public ICollection<Post> Posts { get; set; }
 
-        [Backlink("User")]
+        [InverseProperty("User")]
         public Profile Profile { get; set; }
         #endregion
     }

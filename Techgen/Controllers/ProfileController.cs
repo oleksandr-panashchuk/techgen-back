@@ -19,11 +19,11 @@ namespace Techgen.Controllers
 
         [Route("edit")]
         [HttpPost]
-        public IActionResult Edit([FromBody] ProfileRequestModel profile)
+        public async Task<IActionResult> Edit([FromBody] ProfileRequestModel profile)
         {
             if (ModelState.IsValid)
             {
-                var response = _profileService.Edit(profile);
+                var response = await _profileService.Edit(profile);
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     return Ok(new { Message = "Edit profile Successfully" });
@@ -34,9 +34,9 @@ namespace Techgen.Controllers
 
         [Route("details")]
         [HttpGet]
-        public IActionResult Details()
+        public async Task<IActionResult> Details()
         {
-            var response = _profileService.Get(User.Identity.Name);
+            var response = await _profileService.Get(User.Identity.Name);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 return Ok(response.Data);

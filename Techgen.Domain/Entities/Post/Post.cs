@@ -1,14 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using Realms;
-using Realms.Schema;
-using Realms.Weaving;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Techgen.Domain.Entity;
 
 namespace Techgen.Domain.Entities.Post
@@ -16,7 +8,6 @@ namespace Techgen.Domain.Entities.Post
     public class Post : IEntity
     {
         [BsonId]
-        [PrimaryKey]
         [BsonRepresentation(BsonType.String)]
         public ObjectId Id { get; set; }
 
@@ -35,10 +26,10 @@ namespace Techgen.Domain.Entities.Post
 
         #region Navigation properties
 
-        [Backlink("Post")]    
-        public IQueryable<Comment>? Comments { get; set; }
+        [InverseProperty("Post")]    
+        public ICollection<Comment>? Comments { get; set; }
 
-        [Backlink("Posts")]
+        [InverseProperty("Posts")]
         public User User { get; set; }
 
         #endregion
