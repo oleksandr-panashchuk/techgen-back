@@ -163,7 +163,6 @@ namespace Techgen.Services.Services
             var tokens = user.Tokens.ToList();
 
             tokens.ForEach(x => _unitOfWork.Repository<UserToken>().DeleteById(x.Id.ToString()));
-
             _httpContextAccessor.HttpContext.Response.Cookies.Delete(".AspNetCore.Application.Id");
             _httpContextAccessor.HttpContext.Response.Cookies.Delete(".AspNetCore.Application.Id.Refresh");
 
