@@ -29,6 +29,9 @@ namespace Techgen.Domain.Entities.PostEntities
         [InverseProperty("Post")]    
         public virtual ICollection<Comment>? Comments { get; set; }
 
+        [InverseProperty("Post")]
+        public virtual ICollection<Like>? Likes { get; set; }
+
         [InverseProperty("Posts")]
         public virtual ApplicationUser User { get; set; }
 
