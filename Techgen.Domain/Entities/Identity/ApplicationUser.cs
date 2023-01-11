@@ -49,6 +49,9 @@ namespace Techgen.Domain.Entities.Identity
         public virtual ICollection<Post> Posts { get; set; }
 
         [InverseProperty("User")]
+        public virtual ICollection<Like> Likes { get; set; }
+
+        [InverseProperty("User")]
         public virtual Profile Profile { get; set; }
 
         [InverseProperty("User")]
@@ -67,6 +70,9 @@ namespace Techgen.Domain.Entities.Identity
             Tokens = new List<UserToken>();
             UserRoles = new List<ApplicationUserRole>();
             VerificationTokens = new List<VerificationToken>();
+            Posts = new List<Post>();
+            Comments = new List<Comment>();
+            Likes = new List<Like>();
         }
     }
 }
