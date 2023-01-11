@@ -56,7 +56,7 @@ namespace Techgen.Controllers
         public async Task<IActionResult> Logout()
         {
             await _accountService.Logout();
-            return Json(new MessageResponseModel("yoou have been logout"));
+            return Json(new MessageResponseModel("you have been logout"));
         }
 
         /*[Route("checkRecoveryCode")]

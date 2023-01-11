@@ -100,6 +100,7 @@ namespace Techgen.Services.Services
                 StatusCode = HttpStatusCode.OK
             };
         }
+
         public async Task<IBaseResponse<UserResponseModel>> Get(string id)
         {
             try

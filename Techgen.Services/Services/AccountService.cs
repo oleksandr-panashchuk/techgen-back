@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -68,7 +69,10 @@ namespace Techgen.Services.Services
 
             if (user != null && user.EmailConfirmed)
             {
-                //user exists
+                return new BaseResponse<RegisterResponseModel>
+                {
+                    Description = "User already exists"
+                };
             }
 
             if (user == null)
@@ -88,13 +92,19 @@ namespace Techgen.Services.Services
 
                 if (!result.Succeeded)
                 {
-                    //return base response result.Errors.FirstOrDefault().Description
+                    return new BaseResponse<RegisterResponseModel>
+                    {
+                        Description = result.Errors.FirstOrDefault().Description
+                    };
                 }
                 result = await _userManager.AddToRoleAsync(user, Role.User.ToString());
 
                 if (!result.Succeeded)
                 {
-                    //return base response result.Errors.FirstOrDefault().Description
+                    return new BaseResponse<RegisterResponseModel>
+                    {
+                        Description = result.Errors.FirstOrDefault().Description
+                    };
                 }
             }
 
@@ -109,7 +119,10 @@ namespace Techgen.Services.Services
 
             if (user != null && user.EmailConfirmed)
             {
-                //return base response result.Errors.FirstOrDefault().Description
+                return new BaseResponse<RegisterResponseModel>
+                {
+                    Description = "Admin already exists"
+                };
             }
 
             if (user == null)
@@ -129,13 +142,19 @@ namespace Techgen.Services.Services
 
                 if (!result.Succeeded)
                 {
-                    //return base response result.Errors.FirstOrDefault().Description
+                    return new BaseResponse<RegisterResponseModel>
+                    {
+                        Description = result.Errors.FirstOrDefault().Description
+                    };
                 }
                 result = await _userManager.AddToRoleAsync(user, Role.Admin.ToString());
 
                 if (!result.Succeeded)
                 {
-                    //return base response result.Errors.FirstOrDefault().Description
+                    return new BaseResponse<RegisterResponseModel>
+                    {
+                        Description = result.Errors.FirstOrDefault().Description
+                    };
                 }
 
             }
@@ -149,19 +168,31 @@ namespace Techgen.Services.Services
 
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password) || !user.UserRoles.Any(x => x.Role.Name == Role.User.ToString()))
             {
-                //return base response invalid creaditals
+                return new BaseResponse<LoginResponseModel>
+                {
+                    Description = "Invalid creaditals"
+                };
             }
             if (!string.IsNullOrEmpty(model.Email) && !user.EmailConfirmed)
             {
-                //return base response email is not comfirmed
+                return new BaseResponse<LoginResponseModel>
+                {
+                    Description = "Email is not comfirmed"
+                };
             }
             if (user.IsDeleted)
             {
-                //return base response your acc was delted by admin
+                return new BaseResponse<LoginResponseModel>
+                {
+                    Description = "Your account was deleted by admin"
+                };
             }
             if (!user.IsActive)
             {
-                //return base response you account was blocked
+                return new BaseResponse<LoginResponseModel>
+                {
+                    Description = "Your account was blocked"
+                };
             }
 
             var response = await _jwtService.BuildLoginResponse(user, model.AccessTokenLifetime);
@@ -176,7 +207,10 @@ namespace Techgen.Services.Services
 
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password) || !user.UserRoles.Any(x => x.Role.Name == Role.Admin.ToString() || x.Role.Name == Role.Moderator.ToString()))
             {
-                //invalid craeditals
+                return new BaseResponse<LoginResponseModel>
+                {
+                    Description = "Invalid creaditals"
+                };
             }
 
             var response = await _jwtService.BuildLoginResponse(user, model.AccessTokenLifetime);
@@ -189,11 +223,17 @@ namespace Techgen.Services.Services
             var token = _unitOfWork.Repository<UserToken>().FindOne(w => w.RefreshTokenHash == HashUtility.GetHash(refreshToken) && w.IsActive && w.RefreshExpiresDate > DateTime.UtcNow);
             if (token == null)
             {
-                //refresh token is invalid
+                return new BaseResponse<TokenResponseModel>
+                {
+                    Description = "Invalid creaditals"
+                };
             }
             if (!token.User.UserRoles.Any(x => roles.Contains(x.Role.Name)))
             {
-                //accessdenied
+                return new BaseResponse<TokenResponseModel>
+                {
+                    Description = "Access denied"
+                };
             }
             var result = await _jwtService.CreateUserTokenAsync(token.User, isRefresh: true);
 
@@ -206,7 +246,7 @@ namespace Techgen.Services.Services
 
             if (user == null)
             {
-                //user not found
+                throw new Exception("User not found");
             }
             await _jwtService.ClearUserTokens(user);
         }
