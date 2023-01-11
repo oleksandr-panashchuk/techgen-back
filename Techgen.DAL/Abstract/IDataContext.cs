@@ -1,10 +1,11 @@
 ﻿using MongoDB.Driver;
+using MongoDbGenericRepository;
 using System;
 using System.Threading.Tasks;
 
 namespace Techgen.DAL.Abstract
 {
-    public interface IDataContext : IDisposable
+    public interface IDataContext : IMongoDbContext , IDisposable
     {
         /// <summary>
         /// The IMongoClient from the official MongoDb driver

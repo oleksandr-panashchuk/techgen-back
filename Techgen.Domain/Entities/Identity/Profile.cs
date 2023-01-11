@@ -1,11 +1,10 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
-using Techgen.Domain.Entity;
 using Techgen.Domain.Extentions;
-using Realms;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
-namespace Techgen.Domain.Entities
+namespace Techgen.Domain.Entities.Identity
 {
     [BsonCollection("profiles")]
     public class Profile : IEntity
@@ -14,29 +13,23 @@ namespace Techgen.Domain.Entities
         [BsonRepresentation(BsonType.String)]
         public ObjectId Id { get; set; }
 
-        [BsonElement("Email")]
-        public string Email { get; set; }
+        [MaxLength(30)]
+        public string FirstName { get; set; }
 
-        [BsonElement("FirstName")]
-        public string? FirstName { get; set; }
+        [MaxLength(30)]
+        public string LastName { get; set; }
 
-        [BsonElement("LastName")]
-        public string? LastName { get; set; }
+        public int? AvatarId { get; set; }
 
-        [BsonElement("Age")]
+        public string Country { get; set; }
+
         public int Age { get; set; }
-
-        [BsonElement("Country")]
-        public string? Country { get; set; }
-
-        [BsonElement("UserId")]
-        public string UserId { get; set; }
 
         public DateTime CreatedAt => Id.CreationTime;
 
         #region Navigation properties
         [InverseProperty("Profile")]
-        public User User { get; set; }
+        public virtual ApplicationUser User { get; set; }
         #endregion
 
         #region Additional propeties

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Techgen.Models.RequestModels
 {
-    public class LoginRequestModel
+    public class AdminLoginRequestModel
     {
         [Required(ErrorMessage = "The email address is required")]
         [EmailAddress(ErrorMessage = "Invalid Email Address")]

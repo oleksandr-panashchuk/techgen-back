@@ -1,115 +1,172 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Techgen.Common.Constants;
+using Techgen.Common.Extensions;
+using Techgen.Common.Utilities;
 using Techgen.DAL.Abstract;
-using Techgen.Domain.Entity;
-using Techgen.Models.RequestModels;
-using Techgen.Models.ResponseModels;
-using Techgen.Models.ResponseModels.Base;
+using Techgen.Domain.Entities.Identity;
+using Techgen.Models.ResponseModels.Session;
 using Techgen.Services.Interfaces;
 
 namespace Techgen.Services.Services
 {
     public class JWTService : IJWTService
     {
-        private readonly IConfiguration _configuration;
+        private const int _cookiesLifeTime = 1440; //24hours
+
+        private readonly UserManager<ApplicationUser> _userManager = null;
         private readonly IUnitOfWork _unitOfWork;
-
-        public JWTService(IConfiguration configuration, IUnitOfWork unitOfWork)
+        private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public JWTService(UserManager<ApplicationUser> userManager,
+            IUnitOfWork unitOfWork,
+            IMapper mapper,
+            IHttpContextAccessor httpContextAccessor)
         {
-            _configuration = configuration;
+            _userManager = userManager;
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        public string GenerateAccessToken(IEnumerable<Claim> authClaims)
+        public async Task<ClaimsIdentity> GetIdentity(ApplicationUser user, bool isRefreshToken)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-            var signIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var tokeOptions = new JwtSecurityToken(
-                _configuration["Jwt:Issuer"],
-                _configuration["Jwt:Audience"],
-                authClaims,
-                expires: DateTime.UtcNow.AddMinutes(10),
-                signingCredentials: signIn);
-
-            var token = new JwtSecurityTokenHandler().WriteToken(tokeOptions);
-            return token;
-        }
-
-        public string GenerateRefreshToken()
-        {
-            var randomNumber = new byte[32];
-            using (var rng = RandomNumberGenerator.Create())
+            if (user != null)
             {
-                rng.GetBytes(randomNumber);
-                return Convert.ToBase64String(randomNumber);
-            }
-        }
-
-        public ClaimsPrincipal? GetPrincipalFromExpiredToken(string? token)
-        {
-            var tokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateAudience = false,
-                ValidateIssuer = false,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"])),
-                ValidateLifetime = false
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
-            if (securityToken is not JwtSecurityToken jwtSecurityToken 
-                || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-            {
-                throw new SecurityTokenException("Invalid token");
-            }
-                
-            return principal;
-        }
-
-        public IBaseResponse<AuthenticatedResponse> RefreshToken(TokenRequestModel tokenModel)
-        {
-            string accessToken = tokenModel.AccessToken!;
-            string refreshToken = tokenModel.RefreshToken!;
-
-            var principal = GetPrincipalFromExpiredToken(accessToken);
-
-            string email = ClaimsPrincipal.Current.FindFirst(ClaimTypes.Email).Value;
-
-            var user = _unitOfWork.Repository<User>().FindOne(x => x.Email == email);
-
-            if (user is null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.Now)
-            {
-                return new BaseResponse<AuthenticatedResponse>
+                var roles = await _userManager.GetRolesAsync(user);
+                var claims = new List<Claim>
                 {
-                    Description = "Invalid client request",
-                    StatusCode = System.Net.HttpStatusCode.BadRequest,
+                    new Claim(ClaimsIdentity.DefaultNameClaimType, user.UserName),
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim("isRefresh", isRefreshToken.ToString())
                 };
+
+                foreach (var role in roles)
+                    claims.Add(new Claim(ClaimsIdentity.DefaultRoleClaimType, role));
+
+                return new(claims, "Token", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
             }
+            return null;
+        }
 
-            var newAccessToken = GenerateAccessToken(principal.Claims);
-            var newRefreshToken = GenerateRefreshToken();
+        public JwtSecurityToken CreateToken(DateTime now, ClaimsIdentity identity, DateTime lifetime)
+        {
+            return new JwtSecurityToken(
+                issuer: AuthOptions.ISSUER,
+                audience: AuthOptions.AUDIENCE,
+                notBefore: now,
+                claims: identity.Claims,
+                expires: lifetime,
+                signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256)
+                );
+        }
 
-            user.RefreshToken = newRefreshToken;
-            _unitOfWork.Repository<User>().ReplaceOne(user);
+        public async Task<TokenResponseModel> CreateUserTokenAsync(ApplicationUser user, int? accessTokenLifetime = null, bool isRefresh = false)
+        {
+            var dateNow = DateTime.UtcNow;
 
-            return new BaseResponse<AuthenticatedResponse>
+            #region remove old tokens
+
+            var tokens = _unitOfWork.Repository<UserToken>().FilterBy(x => x.UserId == user.Id.ToString()).ToList();
+
+            tokens.ForEach(x => _unitOfWork.Repository<UserToken>().DeleteById(x.Id.ToString()));
+
+            #endregion
+
+            if (!user.IsActive)
+                return null;
+
+            #region create token
+
+            var accessIdentity = await GetIdentity(user, false);
+            var refreshIdentity = await GetIdentity(user, true);
+
+            if (accessIdentity == null || refreshIdentity == null)
+                throw new Exception("User not found");
+
+            var accessLifetime = accessTokenLifetime.HasValue && accessTokenLifetime.Value != 0 ? dateNow.Add(TimeSpan.FromSeconds(accessTokenLifetime.Value)) : dateNow.Add(TimeSpan.FromDays(AuthOptions.ACCESS_TOKEN_LIFETIME));
+            var refreshLifetime = dateNow.Add(TimeSpan.FromDays(AuthOptions.REFRESH_TOKEN_LIFETIME));
+
+            var accessJwtToken = new JwtSecurityTokenHandler().WriteToken(CreateToken(dateNow, accessIdentity, accessLifetime));
+            var refreshJwtToken = new JwtSecurityTokenHandler().WriteToken(CreateToken(dateNow, refreshIdentity, refreshLifetime));
+
+            user.Tokens.Add(new UserToken
             {
-               Data = new AuthenticatedResponse
-               {
-                   Token = newAccessToken,
-                   RefreshToken = newRefreshToken
-               },
-               StatusCode = System.Net.HttpStatusCode.OK,
+                AccessExpiresDate = accessLifetime,
+                RefreshExpiresDate = refreshLifetime,
+                IsActive = true,
+                AccessTokenHash = HashUtility.GetHash(accessJwtToken),
+                RefreshTokenHash = HashUtility.GetHash(refreshJwtToken),
+            });
+
+            #endregion
+
+            var response = new TokenResponseModel
+            {
+                AccessToken = accessJwtToken,
+                ExpireDate = accessLifetime.ToISO(),
+                RefreshToken = refreshJwtToken,
+                Type = "Bearer"
             };
+
+            _unitOfWork.Repository<ApplicationUser>().ReplaceOne(user);
+
+            return response;
+        }
+
+        public async Task<LoginResponseModel> BuildLoginResponse(ApplicationUser user, int? accessTokenLifetime = null)
+        {
+            user.LastVisitAt = DateTime.UtcNow;
+
+            _unitOfWork.Repository<ApplicationUser>().ReplaceOne(user);
+
+            var tokenResponseModel = await CreateUserTokenAsync(user, accessTokenLifetime);
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var result = new LoginResponseModel()
+            {
+                User = _mapper.Map<ApplicationUser, UserRoleResponseModel>(user, opt => opt.AfterMap((src, dest) =>
+                {
+                    dest.Role = (roles != null) ? roles.SingleOrDefault() : "none";
+                })),
+                Token = tokenResponseModel,
+
+            };
+
+            _httpContextAccessor.HttpContext.Response.Cookies.Append(".AspNetCore.Application.Id", result.Token.AccessToken,
+            new CookieOptions
+            {
+                MaxAge = TimeSpan.FromMinutes(_cookiesLifeTime)
+            });
+
+            _httpContextAccessor.HttpContext.Response.Cookies.Append(".AspNetCore.Application.Id.Refresh", result.Token.RefreshToken,
+            new CookieOptions
+            {
+                MaxAge = TimeSpan.FromMinutes(_cookiesLifeTime)
+            });
+
+            return result;
+        }
+
+        public async Task ClearUserTokens(ApplicationUser user)
+        {
+            var tokens = user.Tokens.ToList();
+
+            tokens.ForEach(x => _unitOfWork.Repository<UserToken>().DeleteById(x.Id.ToString()));
+
+            _httpContextAccessor.HttpContext.Response.Cookies.Delete(".AspNetCore.Application.Id");
+            _httpContextAccessor.HttpContext.Response.Cookies.Delete(".AspNetCore.Application.Id.Refresh");
+
         }
     }
 }
