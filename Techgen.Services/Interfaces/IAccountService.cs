@@ -1,18 +1,54 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Techgen.Domain.Entity;
+using Techgen.Domain.Entities.Identity;
 using Techgen.Models.RequestModels;
 using Techgen.Models.ResponseModels;
 using Techgen.Models.ResponseModels.Base;
+using Techgen.Models.ResponseModels.Session;
 
 namespace Techgen.Services.Interfaces
 {
     public interface IAccountService
     {
-        public Task<IBaseResponse<User>> Register(RegisterRequestModel model);
-        public Task<IBaseResponse<AuthenticatedResponse>> Login(LoginRequestModel model);
-        public IBaseResponse<User> Logout();
-        public Task<IBaseResponse<User>> CheckRecoveryCode(string email, string recoveryCode);
-        public Task<IBaseResponse<User>> ChangePassword(string email, string newPassword);
+        /// <summary>
+        /// Refresh tokens
+        /// </summary>
+        /// <param name="refreshToken">Refresh token</param>
+        /// <param name="roles">Roles</param>
+        /// <returns></returns>
+        Task<IBaseResponse<TokenResponseModel>> RefreshTokenAsync(string refreshToken, List<string> roles);
+
+        /// <summary>
+        /// Register a new user using email
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        Task<IBaseResponse<RegisterResponseModel>> Register(RegisterRequestModel model);
+
+        /// <summary>
+        /// Register a new admin using email
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        Task<IBaseResponse<RegisterResponseModel>> RegisterAdmin(RegisterRequestModel model);
+        /// <summary>
+        /// Login using email
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        Task<IBaseResponse<LoginResponseModel>> Login(LoginRequestModel model);
+
+        /// <summary>
+        /// Admin login
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        Task<IBaseResponse<LoginResponseModel>> AdminLogin(AdminLoginRequestModel model);
+
+        /// <summary>
+        /// Logout
+        /// </summary>
+        /// <returns></returns>
+        Task Logout();
     }
 }

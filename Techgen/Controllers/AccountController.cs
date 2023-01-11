@@ -8,16 +8,19 @@ using Techgen.Services.Interfaces;
 using System.Net;
 using Techgen.Models.RequestModels;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.Extensions.Localization;
+using Techgen.ResourceLibrary;
+using Techgen.Models.ResponseModels;
 
 namespace Techgen.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController : ControllerBase
+    public class AccountController : _BaseApiController
     {
         private readonly IAccountService _accountService;
 
-        public AccountController(IAccountService acccoutService)
+        public AccountController(IStringLocalizer<ErrorsResource> errorsLocalizer, IAccountService acccoutService) : base(errorsLocalizer)
         {
             _accountService = acccoutService;
         }
@@ -50,17 +53,13 @@ namespace Techgen.Controllers
         [Authorize]
         [HttpPost]
         [Route("revoke")]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
-            var response = _accountService.Logout();
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                return NoContent();
-            }
-            return BadRequest(response.Description);
+            await _accountService.Logout();
+            return Json(new MessageResponseModel("yoou have been logout"));
         }
 
-        [Route("checkRecoveryCode")]
+        /*[Route("checkRecoveryCode")]
         [HttpPost]
         public async Task<IActionResult> CheckRecoveryCode([FromQuery] string email, [FromQuery] string recoveryCode)
         {
@@ -70,9 +69,9 @@ namespace Techgen.Controllers
                 return Ok(response.Data);
             }
             return new BadRequestObjectResult(response.Description);
-        }
+        }*/
 
-        [HttpPost]
+        /*[HttpPost]
         [Route("changePassword")]
         public async Task<IActionResult> ChangePassword([FromQuery] string email, [FromQuery] string newPassword)
         {
@@ -82,7 +81,7 @@ namespace Techgen.Controllers
                 return Ok(new { Message = "Change password successfully" });
             }
             return new BadRequestObjectResult(new { Message = response.Description });
-        }
+        }*/
 
     }
 }

@@ -1,16 +1,15 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using Realms;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Techgen.Domain.Entity;
+using Techgen.Domain.Entities.Identity;
 using Techgen.Domain.Extentions;
 
-namespace Techgen.Domain.Entities.Post
+namespace Techgen.Domain.Entities.PostEntities
 {
     [BsonCollection("comments")]
     public class Comment : IEntity
@@ -31,10 +30,10 @@ namespace Techgen.Domain.Entities.Post
 
         public ICollection<Comment>? Answers { get; set; }
 
-        [Backlink("Comments")]
-        public User User { get; set; }
+        [InverseProperty("Comments")]
+        public ApplicationUser User { get; set; }
 
-        [Backlink("Comments")]
+        [InverseProperty("Comments")]
         public Post Post { get; set; }
 
         #endregion

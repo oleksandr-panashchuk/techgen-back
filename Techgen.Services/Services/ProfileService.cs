@@ -1,13 +1,16 @@
-﻿using Org.BouncyCastle.Crypto;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
+using Org.BouncyCastle.Crypto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using Techgen.Common.Extensions;
 using Techgen.DAL.Abstract;
-using Techgen.Domain.Entities;
-using Techgen.Domain.Entity;
+using Techgen.Domain.Entities.Identity;
+using Techgen.Models.Enum;
 using Techgen.Models.RequestModels;
 using Techgen.Models.ResponseModels;
 using Techgen.Models.ResponseModels.Base;
@@ -18,86 +21,101 @@ namespace Techgen.Services.Services
     public class ProfileService : IProfileService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IMapper _mapper;
 
-        public ProfileService(IUnitOfWork unitOfWork)
+        private bool _isUserModerator = false;
+        private bool _isUserAdmin = false;
+        private string? _userId = null;
+
+        public ProfileService(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
+
+            var context = httpContextAccessor.HttpContext;
+
+            if (context?.User != null)
+            {
+                _isUserModerator = context.User.IsInRole(Role.Moderator.ToString());
+                _isUserAdmin = context.User.IsInRole(Role.Admin.ToString());
+
+                try
+                {
+                    _userId = context.User.GetUserId();
+                }
+                catch
+                {
+                    _userId = null;
+                }
+            }
         }
 
-        public async Task<IBaseResponse<Profile>> Edit(ProfileRequestModel model)
+        public async Task<IBaseResponse<UserResponseModel>> Edit(ProfileRequestModel model)
         {
-            var profile = _unitOfWork.Repository<Profile>().FindOne(x => x.Email == model.Email);
+            var user = _unitOfWork.Repository<ApplicationUser>().FindOne(x => x.Id.ToString() == _userId);
 
-            if (profile == null)
+            if (user == null)
             {
-                return new BaseResponse<Profile>
+                return new BaseResponse<UserResponseModel>
                 {
-                    Description = "Profile not found"
+                    Description = "User not found"
                 };
             }
 
-            profile.Age = model.Age;
-            profile.Country = model.Country;
-            //profile.Name = model.Name;
+            user.Profile.Age = model.Age;
+            user.Profile.Country = model.Country;
+            user.UserName = model.Name;
 
-            _unitOfWork.Repository<Profile>().ReplaceOne(profile);
+            _unitOfWork.Repository<ApplicationUser>().ReplaceOne(user);
 
-            return new BaseResponse<Profile>
+            return new BaseResponse<UserResponseModel>
             {
-                Data = profile
+                Data = _mapper.Map<UserResponseModel>(user),
+                StatusCode = HttpStatusCode.OK
             };
         }
 
-        public async Task<IBaseResponse<Profile>> Create(User user)
+        public async Task<IBaseResponse<UserResponseModel>> Create(ApplicationUser usermodel)
         {
-            var profile = _unitOfWork.Repository<Profile>().FindById(user.Id.ToString());
+            var user = _unitOfWork.Repository<ApplicationUser>().FindById(usermodel.Id.ToString());
                         
-            if (profile != null)
+            if (user != null)
             {
-                return new BaseResponse<Profile>
+                return new BaseResponse<UserResponseModel>
                 {
                     Description = "Profile already exists",
                     StatusCode = HttpStatusCode.OK
                 };
             }
 
-            profile = new Profile
-            {   
-                //F = $"user{user.DigitId}",
-                Email = user.Email,
-                UserId = user.Id.ToString(),
-            };
+            user.Profile = new Domain.Entities.Identity.Profile();
 
-            _unitOfWork.Repository<Profile>().InsertOne(profile);
+            _unitOfWork.Repository<ApplicationUser>().InsertOne(user);
 
-            return new BaseResponse<Profile>
+            return new BaseResponse<UserResponseModel>
             {
-                Data = profile,
+                Data = _mapper.Map<UserResponseModel>(user.Profile),
                 StatusCode = HttpStatusCode.OK
             };
         }
-        public async Task<IBaseResponse<ProfileResponseModel>> Get(string id)
+        public async Task<IBaseResponse<UserResponseModel>> Get(string id)
         {
             try
             {
-                var profile = _unitOfWork.Repository<Profile>()
-                    .AsQueryable().Select(x => new ProfileResponseModel()
-                    {
-                        Id = x.Id.ToString(),
-                        //Name = x.Name,
-                        Age = x.Age,
-                        Country = x.Country,
-                    }).Single();
+                var user = _unitOfWork.Repository<ApplicationUser>().FindOne(x => x.Id.ToString() == id);
+                var response = _mapper.Map<UserResponseModel>(user.Profile);
 
-                return new BaseResponse<ProfileResponseModel>()
+                return new BaseResponse<UserResponseModel>()
                 {
-                    Data = profile,
+                    Data = response,
                     StatusCode = HttpStatusCode.OK
                 };
             }
             catch (Exception ex)
             {
-                return new BaseResponse<ProfileResponseModel>()
+                return new BaseResponse<UserResponseModel>()
                 {
                     StatusCode = HttpStatusCode.InternalServerError,
                     Description = $"InternalServerError: {ex.Message}"

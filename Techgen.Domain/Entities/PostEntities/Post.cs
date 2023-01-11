@@ -1,9 +1,9 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.ComponentModel.DataAnnotations.Schema;
-using Techgen.Domain.Entity;
+using Techgen.Domain.Entities.Identity;
 
-namespace Techgen.Domain.Entities.Post
+namespace Techgen.Domain.Entities.PostEntities
 {
     public class Post : IEntity
     {
@@ -27,10 +27,10 @@ namespace Techgen.Domain.Entities.Post
         #region Navigation properties
 
         [InverseProperty("Post")]    
-        public ICollection<Comment>? Comments { get; set; }
+        public virtual ICollection<Comment>? Comments { get; set; }
 
         [InverseProperty("Posts")]
-        public User User { get; set; }
+        public virtual ApplicationUser User { get; set; }
 
         #endregion
     }
