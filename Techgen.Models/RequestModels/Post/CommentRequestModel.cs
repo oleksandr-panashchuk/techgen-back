@@ -17,6 +17,6 @@ namespace Techgen.Models.RequestModels.Post
         public string Text { get; set; }
 
         [Required(ErrorMessage = "post id is required")]
-        public int PostId { get; set; }
+        public string PostId { get; set; }
     }
 }

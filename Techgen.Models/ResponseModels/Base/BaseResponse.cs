@@ -14,6 +14,21 @@ namespace Techgen.Models.ResponseModels.Base
         public HttpStatusCode StatusCode { get; set; }
 
         public T Data { get; set; }
+
+        public BaseResponse(string description)
+        {
+            Description = description;
+        }
+
+        public BaseResponse(T data)
+        {
+            Data = data;
+        }
+
+        public BaseResponse()
+        {
+
+        }
     }
 
     public interface IBaseResponse<T>
