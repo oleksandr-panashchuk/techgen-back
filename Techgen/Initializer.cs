@@ -29,6 +29,8 @@ namespace Techgen
             services.AddScoped<IJWTService, JWTService>();
             services.AddScoped<IEmailSender, EmailSender>();
             services.AddScoped<IProfileService, ProfileService>();
+            services.AddScoped<IPostService, PostService>();
+            services.AddScoped<ICommentService, CommentService>();
         }
     }
 }

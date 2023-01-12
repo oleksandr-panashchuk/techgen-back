@@ -17,7 +17,11 @@ namespace Techgen.Domain.Entities.PostEntities
         [BsonId]
         [BsonRepresentation(BsonType.String)]
         public ObjectId Id { get; set; }
-        
+
+        public string PostId { get; set; }
+
+        public string UserId { get; set; }
+
         [BsonElement("Text")]
         public string Text { get; set; }
 
@@ -28,7 +32,7 @@ namespace Techgen.Domain.Entities.PostEntities
 
         #region Navigation properties
 
-        public ICollection<Comment>? Answers { get; set; }
+        public ICollection<Comment> Answers { get; set; }
 
         [InverseProperty("Comments")]
         public ApplicationUser User { get; set; }
