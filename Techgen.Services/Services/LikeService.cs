@@ -59,7 +59,6 @@ namespace Techgen.Services.Services
            
             like = new Like { PostId = model.PostId, UserId = _userId };
             post.Likes.Add(like);
-            post.LikesCount += 1;
 
             _unitOfWork.Repository<Post>().ReplaceOne(post);
 
@@ -82,7 +81,6 @@ namespace Techgen.Services.Services
             }                    
             
             post.Likes.Remove(like);              
-            post.LikesCount -= 1;
 
             _unitOfWork.Repository<Post>().ReplaceOne(post);
 

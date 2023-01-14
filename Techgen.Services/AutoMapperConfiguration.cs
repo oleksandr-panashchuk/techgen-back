@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Techgen.Domain.Entities.Identity;
+using Techgen.Domain.Entities.PostEntities;
 using Techgen.Models.ResponseModels;
+using Techgen.Models.ResponseModels.Post;
 using Techgen.Models.ResponseModels.Session;
 
 namespace Techgen.Services
@@ -38,6 +40,13 @@ namespace Techgen.Services
 
 
             CreateMap<ApplicationUser, UserRoleResponseModel>();
+
+            #endregion
+
+            #region Post model
+
+            CreateMap<Post, PostResponseModel>()
+                .ForMember(x => x.LikesCount, opt => opt.MapFrom(x => x.Likes.Count));
 
             #endregion
 
