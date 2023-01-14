@@ -21,6 +21,9 @@ namespace Techgen.Domain.Entities.PostEntities
         [BsonElement("Text")]
         public string Text { get; set; }
 
+        [BsonElement("LikesCount")]
+        public int LikesCount { get; set; }
+
         [BsonElement("CreatedAt")]
         public DateTime CreatedAt { get; set; }
 
