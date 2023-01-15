@@ -17,9 +17,6 @@ namespace Techgen
         public static void InitializeRepositories(this IServiceCollection services)
         {
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-
-            
-
         }
 
         public static void InitializeServices(this IServiceCollection services)
@@ -31,6 +28,8 @@ namespace Techgen
             services.AddScoped<IProfileService, ProfileService>();
             services.AddScoped<IPostService, PostService>();
             services.AddScoped<ICommentService, CommentService>();
+            services.AddScoped<ILikeService, LikeService>();
+
         }
     }
 }

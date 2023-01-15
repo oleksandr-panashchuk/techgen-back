@@ -31,19 +31,6 @@ namespace Techgen.DAL
             Database = mongoDatabase;
             Client = Database.Client;
         }
-        /*
-        /// <summary>
-        /// The constructor of the MongoDbContext, it needs a connection string and a database name. 
-        /// </summary>
-        /// <param name="connectionString">The connections string.</param>
-        /// <param name="databaseName">The name of your database.</param>
-        public DataContext(string connectionString, string databaseName)
-        {
-            InitializeGuidRepresentation();
-            Client = new MongoClient(connectionString);
-            Database = Client.GetDatabase(databaseName);
-        }
-        */
 
         /// <summary>
         /// Returns a collection for a document type. Also handles document types with a partition key.
