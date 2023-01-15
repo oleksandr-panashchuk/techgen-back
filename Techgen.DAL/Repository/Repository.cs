@@ -23,14 +23,6 @@ namespace Techgen.DAL.Repository
             _collection = _context.GetCollection<T>();
         }
 
-        private protected string GetCollectionName(Type documentType)
-        {
-            return ((BsonCollectionAttribute)documentType.GetCustomAttributes(
-                    typeof(BsonCollectionAttribute),
-                    true)
-                .FirstOrDefault())?.CollectionName;
-        }
-
         public virtual IQueryable<T> AsQueryable()
         {
             return _collection.AsQueryable();
@@ -88,7 +80,6 @@ namespace Techgen.DAL.Repository
         {
             _collection.InsertMany(documents);
         }
-
 
         public virtual async Task InsertManyAsync(ICollection<T> documents)
         {

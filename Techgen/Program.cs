@@ -1,15 +1,22 @@
 using AspNetCore.Identity.Mongo;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.CookiePolicy;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
+using Swashbuckle.AspNetCore.Filters;
 using System.Configuration;
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using Techgen;
 using Techgen.Common.Constants;
+using Techgen.Common.Helpers.SwaggerFilters;
 using Techgen.Common.Utilities;
 using Techgen.DAL;
 using Techgen.DAL.Abstract;
@@ -107,14 +114,26 @@ builder.Services.AddAuthentication(options =>
                 };
             });
 
-builder.Services.AddMvc();
+builder.Services.AddMvc()    
+.AddNewtonsoftJson(options =>
+{
+    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+})
+.ConfigureApiBehaviorOptions(o => o.SuppressModelStateInvalidFilter = true)
+.SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 
 
-
 builder.Services.AddSwaggerGen(options =>
 {
+
+    var basePath = PlatformServices.Default.Application.ApplicationBasePath;
+    var fileName = typeof(Program).GetTypeInfo().Assembly.GetName().Name + ".xml";
+
+    string XmlCommentsFilePath = Path.Combine(basePath, fileName);
+
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
     {
         In = ParameterLocation.Header,
@@ -122,7 +141,38 @@ builder.Services.AddSwaggerGen(options =>
         Name = "Authorization",
         Type = SecuritySchemeType.ApiKey
     });
+
+    options.OrderActionsBy(x => x.ActionDescriptor.DisplayName);
+
+    //ToDo:
+    // resolve the IApiVersionDescriptionProvider service
+    var provider = sp.GetRequiredService<IApiVersionDescriptionProvider>();
+
+    // add a swagger document for each discovered API version
+    // note: you might choose to skip or document deprecated API versions differently
+    foreach (var description in provider.ApiVersionDescriptions)
+    {
+        options.SwaggerDoc(description.GroupName, CreateInfoForApiVersion(description));
+    }
+
+    // add a custom operation filter which sets default values
+
+    // integrate xml comments
+    options.IncludeXmlComments(XmlCommentsFilePath);
+    options.IgnoreObsoleteActions();
+
+    options.OperationFilter<DefaultValues>();
+    options.OperationFilter<SecurityRequirementsOperationFilter>("Bearer");
+
+    // for deep linking
+    options.CustomOperationIds(e => $"{e.HttpMethod}_{e.RelativePath.Replace('/', '-').ToLower()}");
+
 });
+
+// instead of options.DescribeAllEnumsAsStrings()
+builder.Services.AddSwaggerGenNewtonsoftSupport();
+
+
 
 //EmailService
 var emailConfig = configuration
@@ -199,7 +249,11 @@ app.Use(async (context, next) =>
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Test API V1");
+        c.RoutePrefix = string.Empty;
+    });
 }
 
 app.UseHttpsRedirection();
@@ -220,3 +274,28 @@ app.UseEndpoints(endpoints =>
 
 app.Run();
 
+static OpenApiInfo CreateInfoForApiVersion(ApiVersionDescription description)
+{
+    var info = new OpenApiInfo()
+    {
+        Title = $"ApplicationAuth API {description.ApiVersion}",
+        Version = description.ApiVersion.ToString(),
+        Description = "The ApplicationAuth application with Swagger and API versioning."
+    };
+
+    if (description.IsDeprecated)
+    {
+        info.Description += " This API version has been deprecated.";
+    }
+
+    return info;
+}
+
+string Encode(string input, byte[] key)
+{
+    HMACSHA256 myhmacsha = new HMACSHA256(key);
+    byte[] byteArray = Encoding.UTF8.GetBytes(input);
+    MemoryStream stream = new MemoryStream(byteArray);
+    byte[] hashValue = myhmacsha.ComputeHash(stream);
+    return Base64UrlEncoder.Encode(hashValue);
+}

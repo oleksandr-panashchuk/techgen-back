@@ -49,9 +49,8 @@ namespace Techgen.Services.Services
         {
             var post = _unitOfWork.Repository<Post>().FindById(id);
             if (post == null)
-            {
                 return new BaseResponse<MessageResponseModel>() { Data = new MessageResponseModel($"post does not exist"), StatusCode = System.Net.HttpStatusCode.NotFound };
-            }
+
             _unitOfWork.Repository<Post>().DeleteById(id);
             return new BaseResponse<MessageResponseModel>() { Data = new MessageResponseModel($"{id} was deleted"), StatusCode = System.Net.HttpStatusCode.OK};
         }
@@ -61,13 +60,14 @@ namespace Techgen.Services.Services
             var post = _unitOfWork.Repository<Post>().FindById(id);
 
             if (post == null)
-            {
                 return new BaseResponse<PostResponseModel>() {StatusCode = System.Net.HttpStatusCode.NotFound, Description="that post does not exist" };
-            }
+
             post.Title = model.Name;
             post.Text = model.Text;
+
             _unitOfWork.Repository<Post>().ReplaceOne(post);
             var response = _mapper.Map<PostResponseModel>(post);
+
             return new BaseResponse<PostResponseModel>() {Data = response, StatusCode = System.Net.HttpStatusCode.OK};
         }
 
@@ -81,11 +81,13 @@ namespace Techgen.Services.Services
         public async Task<IBaseResponse<PostResponseModel>> Get(string id)
         {
             var post = _unitOfWork.Repository<Post>().FindById(id);
+
             if (post == null)
-            {
                 return new BaseResponse<PostResponseModel>() {StatusCode = System.Net.HttpStatusCode.NotFound, Description="post does not exist"};
-            }
+
             var response = _mapper.Map<PostResponseModel>(post);
+            response.LikesCount = post.Likes.Count();
+
             return new BaseResponse<PostResponseModel>() { Data = response, StatusCode = System.Net.HttpStatusCode.OK};
         }
 
@@ -94,9 +96,8 @@ namespace Techgen.Services.Services
             var post = _unitOfWork.Repository<Post>().FilterBy(x => x.Title == model.Name).FirstOrDefault(); 
 
             if (post != null)
-            {
                 return new BaseResponse<PostResponseModel>() { StatusCode = System.Net.HttpStatusCode.NotFound, Description="post with such title already exist"};
-            }
+
             post = new Post()
             {
                 Title = model.Name,
