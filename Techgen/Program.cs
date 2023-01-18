@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.IdentityModel.Tokens;

@@ -26,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="wwwroot\Resources\RoadmapImages\" />
     <Folder Include="Новая папка\" />
   </ItemGroup>
 
