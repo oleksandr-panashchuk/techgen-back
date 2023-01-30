@@ -3,12 +3,14 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
 using Swashbuckle.AspNetCore.Filters;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
@@ -51,25 +53,6 @@ builder.Services.AddAuthentication(options =>
                     ValidateActor = false,
                     ValidAudience = AuthOptions.AUDIENCE,
                     ValidateLifetime = true,
-                    //SignatureValidator = (string token, TokenValidationParameters validationParameters) => {
-
-                    //    var jwt = new JwtSecurityToken(token);
-
-                    //    var signKey = AuthOptions.GetSigningCredentials().Key as SymmetricSecurityKey;
-
-                    //    var encodedData = jwt.EncodedHeader + "." + jwt.EncodedPayload;
-                    //    var compiledSignature = Encode(encodedData, signKey.Key);
-
-                    //    //Validate the incoming jwt signature against the header and payload of the token
-                    //    if (compiledSignature != jwt.RawSignature)
-                    //    {
-                    //        throw new Exception("Token signature validation failed.");
-                    //    }
-
-                    //    /// TO DO: initialize user claims
-
-                    //    return jwt;
-                    //},
                     LifetimeValidator = (DateTime? notBefore, DateTime? expires, SecurityToken securityToken, TokenValidationParameters validationParameters) =>
                     {
                         var jwt = securityToken as JwtSecurityToken;
@@ -114,7 +97,7 @@ builder.Services.AddAuthentication(options =>
                 };
             });
 
-builder.Services.AddMvc()    
+builder.Services.AddMvc() 
 .AddNewtonsoftJson(options =>
 {
     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
@@ -125,6 +108,22 @@ builder.Services.AddMvc()
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 
+// Add ApiExplorer to discover versions
+builder.Services.AddVersionedApiExplorer(setup =>
+{
+    setup.GroupNameFormat = "'v'VVV";
+    setup.SubstituteApiVersionInUrl = true;
+});
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddApiVersioning(opt =>
+{
+    opt.DefaultApiVersion = new ApiVersion(1, 0);
+    opt.AssumeDefaultVersionWhenUnspecified = true;
+    opt.ReportApiVersions = true;
+    opt.ApiVersionReader = ApiVersionReader.Combine(new UrlSegmentApiVersionReader(),
+                                                    new HeaderApiVersionReader("x-api-version"),
+                                                    new MediaTypeApiVersionReader("x-api-version"));
+});
 
 builder.Services.AddSwaggerGen(options =>
 {
@@ -144,17 +143,6 @@ builder.Services.AddSwaggerGen(options =>
 
     options.OrderActionsBy(x => x.ActionDescriptor.DisplayName);
 
-    //ToDo:
-    // resolve the IApiVersionDescriptionProvider service
-    var provider = sp.GetRequiredService<IApiVersionDescriptionProvider>();
-
-    // add a swagger document for each discovered API version
-    // note: you might choose to skip or document deprecated API versions differently
-    foreach (var description in provider.ApiVersionDescriptions)
-    {
-        options.SwaggerDoc(description.GroupName, CreateInfoForApiVersion(description));
-    }
-
     // add a custom operation filter which sets default values
 
     // integrate xml comments
@@ -172,7 +160,7 @@ builder.Services.AddSwaggerGen(options =>
 // instead of options.DescribeAllEnumsAsStrings()
 builder.Services.AddSwaggerGenNewtonsoftSupport();
 
-
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
 //EmailService
 var emailConfig = configuration
@@ -191,8 +179,9 @@ builder.Services.AddSingleton<IMongoDatabase>(sp =>
 
     return mongoDb;
 });
-builder.Services.AddScoped<IDataContext>(provider => provider.GetService<DataContext>());
+builder.Services.AddScoped<IDataContext, DataContext>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
 
 //impliment identity
 var mongoDbSettings = builder.Configuration.GetSection("DatabaseSettings").Get<DatabaseSettings>();
@@ -225,7 +214,6 @@ builder.Services.InitializeServices();
 
 
 var app = builder.Build();
-
 #region Cookie auth
 
 app.UseCookiePolicy(new CookiePolicyOptions
@@ -248,12 +236,50 @@ app.Use(async (context, next) =>
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
+    app.UseSwagger(options =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Test API V1");
-        c.RoutePrefix = string.Empty;
+        options.PreSerializeFilters.Add((swagger, httpReq) =>
+        {
+            //swagger.Host = httpReq.Host.Value;
+
+            var ampersand = "&amp;";
+
+            foreach (var path in swagger.Paths)
+            {
+                if (path.Value.Operations.Any(x => x.Key == OperationType.Get && x.Value.Deprecated))
+                    path.Value.Operations.First(x => x.Key == OperationType.Get).Value.Description = path.Value.Operations.First(x => x.Key == OperationType.Get).Value.Description.Replace(ampersand, "&");
+
+                if (path.Value.Operations.Any(x => x.Key == OperationType.Delete && x.Value?.Description != null))
+                    path.Value.Operations.First(x => x.Key == OperationType.Delete).Value.Description = path.Value.Operations.First(x => x.Key == OperationType.Delete).Value.Description.Replace(ampersand, "&");
+            }
+
+            var paths = swagger.Paths.ToDictionary(p => p.Key, p => p.Value);
+            foreach (KeyValuePair<string, OpenApiPathItem> path in paths)
+            {
+                swagger.Paths.Remove(path.Key);
+                swagger.Paths.Add(path.Key.ToLowerInvariant(), path.Value);
+            }
+        });
     });
+
+    // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), specifying the Swagger JSON endpoint.
+    app.UseSwaggerUI(options =>
+    {
+        options.IndexStream = () => File.OpenRead("Views/Swagger/swagger-ui.html");
+        options.InjectStylesheet("/Swagger/swagger-ui.style.css");
+
+        var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+
+        foreach (var description in provider.ApiVersionDescriptions)
+            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+
+        options.EnableFilter();
+
+        // for deep linking
+        options.EnableDeepLinking();
+        options.DisplayOperationId();
+    });
+
 }
 
 app.UseHttpsRedirection();

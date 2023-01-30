@@ -11,11 +11,18 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Localization;
 using Techgen.ResourceLibrary;
 using Techgen.Models.ResponseModels;
+using Techgen.Common.Constants;
+using Techgen.Models.ResponseModels.Session;
+using Swashbuckle.AspNetCore.Annotations;
+using Techgen.Helpers.Attributes;
+using Techgen.Models.ResponseModels.Base;
 
-namespace Techgen.Controllers
+namespace Techgen.Controllers.v1
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [ApiVersion("1.0")]
+    [Produces("application/json")]
+    [Route("api/v{api-version:apiVersion}/[controller]")]
     public class AccountController : _BaseApiController
     {
         private readonly IAccountService _accountService;
@@ -25,8 +32,28 @@ namespace Techgen.Controllers
             _accountService = acccoutService;
         }
 
-        [HttpPost]
-        [Route("register")]
+        // POST api/v1/account
+        /// <summary>
+        /// Register new user
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST api/v1/users
+        ///     {                
+        ///         "email" : "test@example.com",
+        ///         "password" : "1simplepassword",
+        ///         "confirmPassword" : "1simplepassword"
+        ///     }
+        ///
+        /// </remarks>
+        /// <returns>HTTP 201 with user email and info about email status or HTTP 4XX, 500 with error message</returns>
+        [AllowAnonymous]
+        [SwaggerResponse(201, ResponseMessages.SuccessfulRegistration, typeof(JsonResponse<RegisterResponseModel>))]
+        [SwaggerResponse(400, ResponseMessages.InvalidCredentials, typeof(ErrorResponseModel))]
+        [SwaggerResponse(422, ResponseMessages.EmailAlreadyRegistered, typeof(ErrorResponseModel))]
+        [SwaggerResponse(500, ResponseMessages.InternalServerError, typeof(ErrorResponseModel))]
+        [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestModel model)
         {
             var response = await _accountService.Register(model);
@@ -52,7 +79,7 @@ namespace Techgen.Controllers
 
         [Authorize]
         [HttpPost]
-        [Route("revoke")]
+        [Route("logout")]
         public async Task<IActionResult> Logout()
         {
             await _accountService.Logout();
