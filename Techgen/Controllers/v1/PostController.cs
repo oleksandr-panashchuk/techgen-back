@@ -3,7 +3,7 @@ using Microsoft.Extensions.Localization;
 using Techgen.ResourceLibrary;
 using Techgen.Services.Interfaces;
 
-namespace Techgen.Controllers
+namespace Techgen.Controllers.v1
 {
     [ApiController]
     [Route("[controller]")]

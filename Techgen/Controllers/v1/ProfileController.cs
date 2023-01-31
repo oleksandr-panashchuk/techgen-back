@@ -4,7 +4,7 @@ using System.Net;
 using Techgen.Models.RequestModels;
 using Techgen.Services.Interfaces;
 
-namespace Techgen.Controllers
+namespace Techgen.Controllers.v1
 {
     [Route("api/[controller]")]
     [ApiController]
