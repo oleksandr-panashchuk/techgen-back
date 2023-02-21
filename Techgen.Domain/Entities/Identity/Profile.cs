@@ -1,38 +1,44 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
-using Techgen.Domain.Extentions;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel;
 
 namespace Techgen.Domain.Entities.Identity
 {
-    [BsonCollection("profiles")]
-    public class Profile : IEntity
+    public class Profile : IEntity<int>
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.String)]
-        public ObjectId Id { get; set; }
+        #region Properties
+
+        // Profile has same id as User
+        [ForeignKey("User")]
+        public int Id { get; set; }
 
         [MaxLength(30)]
+        [DefaultValue("")]
         public string FirstName { get; set; }
 
         [MaxLength(30)]
+        [DefaultValue("")]
         public string LastName { get; set; }
 
         public int? AvatarId { get; set; }
 
-        public string Country { get; set; }
+        public int BraintreeCustomerId { get; set; }
 
-        public int Age { get; set; }
+        public int StripeCustomerId { get; set; }
 
-        public DateTime CreatedAt => Id.CreationTime;
-
-        #region Navigation properties
-        [InverseProperty("Profile")]
-        public virtual ApplicationUser User { get; set; }
         #endregion
 
-        #region Additional propeties
+        #region Navigation properties
+
+        [InverseProperty("Profile")]
+        public virtual ApplicationUser User { get; set; }
+
+        #endregion
+
+        #region Additional Properties
+
         [NotMapped]
         public string FullName
         {
@@ -44,6 +50,7 @@ namespace Techgen.Domain.Entities.Identity
                     return string.Empty;
             }
         }
+
         #endregion
     }
 }

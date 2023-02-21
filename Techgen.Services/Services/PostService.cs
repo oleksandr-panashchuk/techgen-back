@@ -22,7 +22,7 @@ namespace Techgen.Services.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IMapper _mapper;
 
-        private string? _userId = null;
+        private int? _userId = null;
 
         public PostService(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, IMapper mapper)
         {
@@ -45,9 +45,9 @@ namespace Techgen.Services.Services
             }
         }
 
-        public async Task<IBaseResponse<MessageResponseModel>> Delete(string id)
+        public async Task<IBaseResponse<MessageResponseModel>> Delete(int id)
         {
-            var post = _unitOfWork.Repository<Post>().FindById(id);
+            var post = _unitOfWork.Repository<Post>().GetById(id);
             if (post == null)
                 return new BaseResponse<MessageResponseModel>() { Data = new MessageResponseModel($"post does not exist"), StatusCode = System.Net.HttpStatusCode.NotFound };
 
@@ -55,9 +55,9 @@ namespace Techgen.Services.Services
             return new BaseResponse<MessageResponseModel>() { Data = new MessageResponseModel($"{id} was deleted"), StatusCode = System.Net.HttpStatusCode.OK};
         }
 
-        public async Task<IBaseResponse<PostResponseModel>> Update(string id, PostRequestModel model)
+        public async Task<IBaseResponse<PostResponseModel>> Update(int id, PostRequestModel model)
         {
-            var post = _unitOfWork.Repository<Post>().FindById(id);
+            var post = _unitOfWork.Repository<Post>().GetById(id);
 
             if (post == null)
                 return new BaseResponse<PostResponseModel>() {StatusCode = System.Net.HttpStatusCode.NotFound, Description="that post does not exist" };
@@ -65,7 +65,7 @@ namespace Techgen.Services.Services
             post.Title = model.Name;
             post.Text = model.Text;
 
-            _unitOfWork.Repository<Post>().ReplaceOne(post);
+            _unitOfWork.Repository<Post>().Update(post);
             var response = _mapper.Map<PostResponseModel>(post);
 
             return new BaseResponse<PostResponseModel>() {Data = response, StatusCode = System.Net.HttpStatusCode.OK};
@@ -73,14 +73,14 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<IEnumerable<SmallPostResponseModel>>> GetAll()
         {
-            var posts = _unitOfWork.Repository<Post>().AsQueryable();
+            var posts = _unitOfWork.Repository<Post>().GetAll();
             var response = _mapper.Map<IEnumerable<SmallPostResponseModel>>(posts);
             return new BaseResponse<IEnumerable<SmallPostResponseModel>>() {Data = response, StatusCode = System.Net.HttpStatusCode.OK};
         }
 
-        public async Task<IBaseResponse<PostResponseModel>> Get(string id)
+        public async Task<IBaseResponse<PostResponseModel>> Get(int id)
         {
-            var post = _unitOfWork.Repository<Post>().FindById(id);
+            var post = _unitOfWork.Repository<Post>().GetById(id);
 
             if (post == null)
                 return new BaseResponse<PostResponseModel>() {StatusCode = System.Net.HttpStatusCode.NotFound, Description="post does not exist"};
@@ -93,7 +93,7 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<PostResponseModel>> Create(PostRequestModel model)
         {
-            var post = _unitOfWork.Repository<Post>().FilterBy(x => x.Title == model.Name).FirstOrDefault(); 
+            var post = _unitOfWork.Repository<Post>().Get(x => x.Title == model.Name).FirstOrDefault(); 
 
             if (post != null)
                 return new BaseResponse<PostResponseModel>() { StatusCode = System.Net.HttpStatusCode.NotFound, Description="post with such title already exist"};
@@ -104,7 +104,7 @@ namespace Techgen.Services.Services
                 Text = model.Text,
             };
 
-            _unitOfWork.Repository<Post>().InsertOne(post);
+            _unitOfWork.Repository<Post>().Insert(post);
 
             var response = _mapper.Map<PostResponseModel>(post);
             return new BaseResponse<PostResponseModel>() {Data = response, StatusCode = System.Net.HttpStatusCode.OK };

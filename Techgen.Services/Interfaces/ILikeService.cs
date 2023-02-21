@@ -10,7 +10,7 @@ namespace Techgen.Services.Interfaces
 {
     public interface ILikeService
     {
-        Task<IBaseResponse<PostResponseModel>> Create(string postId);
-        Task<IBaseResponse<PostResponseModel>> Delete(string postId);
+        Task<IBaseResponse<PostResponseModel>> Create(int postId);
+        Task<IBaseResponse<PostResponseModel>> Delete(int postId);
     }
 }

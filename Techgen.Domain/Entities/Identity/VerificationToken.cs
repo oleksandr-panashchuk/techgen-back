@@ -2,32 +2,29 @@
 using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Techgen.Domain.Extentions;
 using Techgen.Models.Enum;
 
 namespace Techgen.Domain.Entities.Identity
 {
-    [BsonCollection("verificationTokens")]
     public class VerificationToken : IEntity
     {
         #region Properties
 
-        [BsonId]
-        [BsonRepresentation(BsonType.String)]
-        public ObjectId Id { get; set; }
+        public int Id { get; set; }
 
-        public DateTime CreatedAt => Id.CreationTime;
+        public int? UserId { get; set; }
 
-        public string? UserId { get; set; }
-
+        [DefaultValue("")]
         public string PhoneNumber { get; set; }
 
         [MaxLength(200)]
+        [DefaultValue("")]
         public string TokenHash { get; set; }
 
         public DateTime CreateDate { get; set; }

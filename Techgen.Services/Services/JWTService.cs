@@ -76,9 +76,9 @@ namespace Techgen.Services.Services
 
             #region remove old tokens
 
-            var tokens = _unitOfWork.Repository<UserToken>().FilterBy(x => x.UserId == user.Id.ToString()).ToList();
+            var tokens = _unitOfWork.Repository<UserToken>().Get(x => x.UserId == user.Id).ToList();
 
-            tokens.ForEach(x => _unitOfWork.Repository<UserToken>().DeleteById(x.Id.ToString()));
+            tokens.ForEach(x => _unitOfWork.Repository<UserToken>().DeleteById(x.Id));
 
             #endregion
 
@@ -118,7 +118,8 @@ namespace Techgen.Services.Services
                 Type = "Bearer"
             };
 
-            _unitOfWork.Repository<ApplicationUser>().ReplaceOne(user);
+            _unitOfWork.Repository<ApplicationUser>().Update(user);
+            _unitOfWork.SaveChanges();
 
             return response;
         }
@@ -127,7 +128,8 @@ namespace Techgen.Services.Services
         {
             user.LastVisitAt = DateTime.UtcNow;
 
-            _unitOfWork.Repository<ApplicationUser>().ReplaceOne(user);
+            _unitOfWork.Repository<ApplicationUser>().Update(user);
+            _unitOfWork.SaveChanges();
 
             var tokenResponseModel = await CreateUserTokenAsync(user, accessTokenLifetime);
 
@@ -162,7 +164,7 @@ namespace Techgen.Services.Services
         {
             var tokens = user.Tokens.ToList();
 
-            tokens.ForEach(x => _unitOfWork.Repository<UserToken>().DeleteById(x.Id.ToString()));
+            tokens.ForEach(x => _unitOfWork.Repository<UserToken>().DeleteById(x.Id));
             _httpContextAccessor.HttpContext.Response.Cookies.Delete(".AspNetCore.Application.Id");
             _httpContextAccessor.HttpContext.Response.Cookies.Delete(".AspNetCore.Application.Id.Refresh");
 

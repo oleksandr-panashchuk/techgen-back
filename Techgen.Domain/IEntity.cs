@@ -8,13 +8,14 @@ using System.Threading.Tasks;
 
 namespace Techgen.Domain
 {
-    public interface IEntity
+    public interface IEntity<TKey>
+         where TKey : IComparable<TKey>, IComparable
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.String)]
-        public ObjectId Id { get; set; }
+        TKey Id { get; set; }
+    }
 
-        DateTime CreatedAt { get; }
+    public interface IEntity : IEntity<int>
+    {
     }
 
 }

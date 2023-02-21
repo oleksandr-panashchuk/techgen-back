@@ -7,23 +7,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Techgen.Domain.Extentions;
+using Techgen.Common.Extensions;
 
 namespace Techgen.Domain.Entities.Identity
 {
-    public class ApplicationRole : MongoIdentityRole, IEntity
+    public class ApplicationRole : IdentityRole<int>, IEntity
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.String)]
-        public ObjectId Id { get; set; }
+        public override int Id { get; set; }
 
         public ICollection<ApplicationUserRole> UserRoles { get; set; }
 
-        public DateTime CreatedAt => Id.CreationTime;
-
         public ApplicationRole()
         {
-            UserRoles = new List<ApplicationUserRole>();
+            UserRoles = UserRoles.Empty();
         }
     }
 }

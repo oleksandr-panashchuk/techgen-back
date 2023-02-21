@@ -13,9 +13,9 @@ namespace Techgen.Services.Interfaces
     public interface ICommentService
     {
         Task<IBaseResponse<CommentResponseModel>> Create(CommentRequestModel model);
-        Task<IBaseResponse<IEnumerable<CommentResponseModel>>> GetAll(string postId);
-        Task<IBaseResponse<CommentResponseModel>> CreateAnswer(CommentRequestModel model, string postId);
-        Task<IBaseResponse<MessageResponseModel>> UserDelete(string id);
+        Task<IBaseResponse<IEnumerable<CommentResponseModel>>> GetAll(int postId);
+        Task<IBaseResponse<CommentResponseModel>> CreateAnswer(CommentRequestModel model, int postId);
+        Task<IBaseResponse<MessageResponseModel>> UserDelete(int id);
         Task<IBaseResponse<MessageResponseModel>> AdminDelete(AdminDeleteCommentRequestModel model);
 
     }

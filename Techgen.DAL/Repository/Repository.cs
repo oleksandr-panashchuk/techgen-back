@@ -1,4 +1,7 @@
-﻿using MongoDB.Bson;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
@@ -8,132 +11,215 @@ using System.Text;
 using System.Threading.Tasks;
 using Techgen.DAL.Abstract;
 using Techgen.Domain;
-using Techgen.Domain.Extentions;
+using Techgen.Domain.Entities.Identity;
 
 namespace Techgen.DAL.Repository
 {
-    public class Repository<T> : IRepository<T> where T : IEntity 
+    public class Repository<T> : IRepository<T> where T : class
     {
         private readonly IDataContext _context;
-        private readonly IMongoCollection<T> _collection;
-        
+        private DbSet<T> _entities;
+
         public Repository(IDataContext context)
         {
             _context = context;
-            _collection = _context.GetCollection<T>();
         }
 
-        public virtual IQueryable<T> AsQueryable()
+        private DbSet<T> Entities
         {
-            return _collection.AsQueryable();
-        }
-
-        public virtual IEnumerable<T> FilterBy(Expression<Func<T, bool>> filterExpression)
-        {
-            return _collection.Find(filterExpression).ToEnumerable();
-        }
-
-        public virtual IEnumerable<TProjected> FilterBy<TProjected>(Expression<Func<T, bool>> filterExpression, Expression<Func<T, TProjected>> projectionExpression)
-        {
-            return _collection.Find(filterExpression).Project(projectionExpression).ToEnumerable();
-        }
-
-        public virtual T FindOne(Expression<Func<T, bool>> filterExpression)
-        {
-            return _collection.Find(filterExpression).FirstOrDefault();
-        }
-
-        public virtual Task<T> FindOneAsync(Expression<Func<T, bool>> filterExpression)
-        {
-            return Task.Run(() => _collection.Find(filterExpression).FirstOrDefaultAsync());
-        }
-
-        public virtual T FindById(string id)
-        {
-            var objectId = new ObjectId(id);
-            var filter = Builders<T>.Filter.Eq(doc => doc.Id, objectId);
-            return _collection.Find(filter).SingleOrDefault();
-        }
-
-        public virtual Task<T> FindByIdAsync(string id)
-        {
-            return Task.Run(() =>
+            get
             {
-                var objectId = new ObjectId(id);
-                var filter = Builders<T>.Filter.Eq(doc => doc.Id, objectId);
-                return _collection.Find(filter).SingleOrDefaultAsync();
-            });
+                if (_entities == null)
+                    _entities = _context.Set<T>();
+
+                return _entities;
+            }
         }
 
-
-        public virtual void InsertOne(T document)
+        private void ThrowIfEntityIsNull(T entity)
         {
-            _collection.InsertOne(document);
+            if (entity == null)
+                throw new ArgumentNullException("entity");
         }
 
-        public virtual Task InsertOneAsync(T document)
+        public virtual IQueryable<T> Table
         {
-            return Task.Run(() => _collection.InsertOneAsync(document));
-        }
-
-        public void InsertMany(ICollection<T> documents)
-        {
-            _collection.InsertMany(documents);
-        }
-
-        public virtual async Task InsertManyAsync(ICollection<T> documents)
-        {
-            await _collection.InsertManyAsync(documents);
-        }
-
-        public void ReplaceOne(T document)
-        {
-            var filter = Builders<T>.Filter.Eq(doc => doc.Id, document.Id);
-            _collection.FindOneAndReplace(filter, document);
-        }
-
-        public virtual async Task ReplaceOneAsync(T document)
-        {
-            var filter = Builders<T>.Filter.Eq(doc => doc.Id, document.Id);
-            await _collection.FindOneAndReplaceAsync(filter, document);
-        }
-
-        public void DeleteOne(Expression<Func<T, bool>> filterExpression)
-        {
-            _collection.FindOneAndDelete(filterExpression);
-        }
-
-        public Task DeleteOneAsync(Expression<Func<T, bool>> filterExpression)
-        {
-            return Task.Run(() => _collection.FindOneAndDeleteAsync(filterExpression));
-        }
-
-        public void DeleteById(string id)
-        {
-            var objectId = new ObjectId(id);
-            var filter = Builders<T>.Filter.Eq(doc => doc.Id, objectId);
-            _collection.FindOneAndDelete(filter);
-        }
-
-        public Task DeleteByIdAsync(string id)
-        {
-            return Task.Run(() =>
+            get
             {
-                var objectId = new ObjectId(id);
-                var filter = Builders<T>.Filter.Eq(doc => doc.Id, objectId);
-                _collection.FindOneAndDeleteAsync(filter);
-            });
+                return Entities;
+            }
         }
 
-        public void DeleteMany(Expression<Func<T, bool>> filterExpression)
+        public IList<T> GetAll()
         {
-            _collection.DeleteMany(filterExpression);
+            return Entities.ToList();
         }
 
-        public Task DeleteManyAsync(Expression<Func<T, bool>> filterExpression)
+        public IQueryable<T> Get(Expression<Func<T, bool>> predicate)
         {
-            return Task.Run(() => _collection.DeleteManyAsync(filterExpression));
+            return Entities.Where(predicate);
         }
+
+        public T Find(Expression<Func<T, bool>> predicate)
+        {
+            return Entities.FirstOrDefault(predicate);
+        }
+
+        public T GetById(object id)
+        {
+            if (typeof(T) == typeof(ApplicationUser))
+            {
+                var users = Entities.Include("Tokens");
+
+                return ((IQueryable<ApplicationUser>)users).FirstOrDefault(w => w.Id == (int)id) as T;
+            }
+
+            return Entities.Find(id);
+        }
+
+        public void Insert(T entity)
+        {
+            try
+            {
+                ThrowIfEntityIsNull(entity);
+
+                Entities.Add(entity);
+            }
+            catch (Exception dbEx)
+            {
+                throw;
+            }
+        }
+
+        public async Task InsertAsync(T entity)
+        {
+            await Task.Run(() => Insert(entity));
+        }
+
+        public void Update(T entity)
+        {
+            try
+            {
+                ThrowIfEntityIsNull(entity);
+                ((DataContext)_context).Entry(entity).State = EntityState.Modified;
+            }
+            catch (Exception dbEx)
+            {
+                throw;
+            }
+        }
+
+        public async Task UpdateAsync(T entity)
+        {
+            await Task.Run(() => Update(entity));
+        }
+
+        public void Delete(T entity)
+        {
+            try
+            {
+                ThrowIfEntityIsNull(entity);
+
+                Entities.Remove(entity);
+            }
+            catch (Exception dbEx)
+            {
+                throw dbEx;
+            }
+        }
+
+        public void DeleteById(int id)
+        {
+            try
+            {
+                T entity = GetById(id);
+
+                ThrowIfEntityIsNull(entity);
+
+                Entities.Remove(entity);
+            }
+            catch (Exception dbEx)
+            {
+                throw;
+            }
+        }
+
+        public IEnumerable<S> ExecuteStoredProcedure<S>(string storedProcedure, Dictionary<string, object> parameters) where S : class
+        {
+            try
+            {
+                return _context.GetDataFromSqlCommand<S>(storedProcedure, parameters);
+            }
+            catch (Exception dbEx)
+            {
+                throw;
+            }
+        }
+
+        public async Task<bool> Any(Expression<Func<T, bool>> predicate = null)
+        {
+            try
+            {
+                if (predicate == null)
+                    return await Table.AnyAsync();
+                else
+                    return await Table.AnyAsync(predicate);
+            }
+            catch (Exception dbEx)
+            {
+                throw;
+            }
+        }
+
+        #region Pagination
+
+        public IQueryable<T> GetPage(int limit, int offset, string sort, bool orderByDescending)
+        {
+            try
+            {
+                var entityType = _context.Model.FindEntityType(typeof(T));
+
+                // Table info 
+                var tableName = entityType.GetTableName();
+                var tableSchema = entityType.GetSchema();
+
+                Dictionary<string, string> names = new Dictionary<string, string>();
+
+                // Column info 
+                foreach (var property in entityType.GetProperties())
+                {
+                    var propertyName = property.Name;
+                    var columnName = property.GetColumnName(StoreObjectIdentifier.Table(tableName, tableSchema));
+
+                    names.Add(propertyName, columnName);
+
+                    //var columnType = property.Relational().ColumnType;
+                };
+
+                var orderByStr = "";
+
+                if (names.Any(w => string.Compare(w.Key, sort, true) == 0))
+                {
+                    orderByStr = names.First(w => string.Compare(w.Key, sort, true) == 0).Value;
+                }
+                else
+                {
+                    orderByStr = "Id";
+                }
+                return _entities.FromSqlRaw(string.Join(" ", "SELECT * FROM", tableName, "ORDER BY", orderByStr, (orderByDescending ? "DESC" : "ASC"), "OFFSET", offset, "ROWS FETCH NEXT", limit, "ROWS ONLY"));
+            }
+            catch (SqlException ex)
+            {
+                throw ex;
+            }
+            catch (Exception dbEx)
+            {
+                throw dbEx;
+            }
+        }
+
+        #endregion
+
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
@@ -145,8 +231,8 @@ namespace Techgen.DAL.Repository
                 if (disposing)
                 {
                     // TODO: dispose managed state (managed objects).                  
-                    _context.Client.Cluster.Dispose();
                     _context.Dispose();
+                    _entities = null;
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.

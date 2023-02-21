@@ -18,7 +18,7 @@ namespace Techgen.Controllers.v1
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetPost([FromRoute] string id)
+        public async Task<IActionResult> GetPost([FromRoute] int id)
         {
             var response = await _postService.Get(id);
             if (response.StatusCode == System.Net.HttpStatusCode.OK)

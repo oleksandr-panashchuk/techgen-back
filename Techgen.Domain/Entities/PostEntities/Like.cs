@@ -2,32 +2,32 @@
 using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Techgen.Domain.Entities.Identity;
-using Techgen.Domain.Extentions;
 
 namespace Techgen.Domain.Entities.PostEntities
 {
-    [BsonCollection("likes")]
-    public class Like : IEntity
+    public class Like : IEntity<int>
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.String)]
-        public ObjectId Id { get; set; }
+        [Key]
+        public int Id { get; set; }
 
-        public string UserId { get; set; }
+        public int UserId { get; set; }
 
-        public string PostId { get; set; }
+        public int PostId { get; set; }
 
-        public DateTime CreatedAt => Id.CreationTime;
+        public DateTime CreatedAt { get; set; }
 
         #region Navigation properties
+        [ForeignKey("UserId")]
         [InverseProperty("Likes")]
         public virtual ApplicationUser User { get; set; }
 
+        [ForeignKey("PostId")]
         [InverseProperty("Likes")]
         public virtual Post Post { get; set; }
         #endregion

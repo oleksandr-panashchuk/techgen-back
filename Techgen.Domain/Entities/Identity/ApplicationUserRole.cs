@@ -1,15 +1,14 @@
 ﻿using AspNetCore.Identity.MongoDbCore.Models;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Techgen.Domain.Extentions;
 
 namespace Techgen.Domain.Entities.Identity
 {
-    [BsonCollection("userRoles")]
-    public class ApplicationUserRole : MongoIdentityRole
+    public class ApplicationUserRole : IdentityUserRole<int>
     {
         public virtual ApplicationUser User { get; set; }
 

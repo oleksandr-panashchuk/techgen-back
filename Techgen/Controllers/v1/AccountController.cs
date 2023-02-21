@@ -32,14 +32,14 @@ namespace Techgen.Controllers.v1
             _accountService = acccoutService;
         }
 
-        // POST api/v1/account
+        // POST api/v1/account/register
         /// <summary>
         /// Register new user
         /// </summary>
         /// <remarks>
         /// Sample request:
         ///
-        ///     POST api/v1/users
+        ///     POST api/v1/account/register
         ///     {                
         ///         "email" : "test@example.com",
         ///         "password" : "1simplepassword",
@@ -57,24 +57,36 @@ namespace Techgen.Controllers.v1
         public async Task<IActionResult> Register([FromBody] RegisterRequestModel model)
         {
             var response = await _accountService.Register(model);
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                return Ok("User created successfully.");
-            }
-            return new BadRequestObjectResult(new { Message = response.Description });
+            return Json(new JsonResponse<IBaseResponse<RegisterResponseModel>>(response));
         }
 
+        // POST api/v1/account
+        /// <summary>
+        /// Login
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST api/v1/acoount/login
+        ///     {                
+        ///         "email" : "test@example.com",
+        ///         "password" : "1simplepassword",
+        ///         "AccessTokenLifetime" : "10000"
+        ///     }
+        ///
+        /// </remarks>
+        /// <returns>HTTP 201 with token and user response model or HTTP 4XX, 500 with error message</returns>
+        [AllowAnonymous]
+        [SwaggerResponse(201, ResponseMessages.SuccessfulRegistration, typeof(JsonResponse<IBaseResponse<LoginResponseModel>>))]
+        [SwaggerResponse(400, ResponseMessages.InvalidCredentials, typeof(ErrorResponseModel))]
+        [SwaggerResponse(422, ResponseMessages.EmailAlreadyRegistered, typeof(ErrorResponseModel))]
+        [SwaggerResponse(500, ResponseMessages.InternalServerError, typeof(ErrorResponseModel))]
         [HttpPost]
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestModel model)
         {
             var response = await _accountService.Login(model);
-
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                return Ok(response.Data);
-            }
-            return Unauthorized();
+            return Json(new JsonResponse<IBaseResponse<LoginResponseModel>>(response));
         }
 
         [Authorize]

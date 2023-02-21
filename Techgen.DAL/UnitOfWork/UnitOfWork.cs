@@ -22,7 +22,7 @@ namespace Techgen.DAL.UnitOfWork
             _repositories = new Dictionary<Type, object>();
         }
 
-        public IRepository<T> Repository<T>() where T : IEntity
+        public IRepository<T> Repository<T>() where T : class
         {
             if (_repositories.Keys.Contains(typeof(T)))
                 return _repositories[typeof(T)] as IRepository<T>;
@@ -31,6 +31,16 @@ namespace Techgen.DAL.UnitOfWork
             _repositories.Add(typeof(T), repo);
 
             return repo;
+        }
+
+        public int SaveChanges()
+        {
+            return _context.SaveChanges();
+        }
+
+        public async Task<int> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync();
         }
 
         #region IDisposable Support

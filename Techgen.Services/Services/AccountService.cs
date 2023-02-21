@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -29,7 +30,7 @@ namespace Techgen.Services.Services
         
         private bool _isUserModerator = false;
         private bool _isUserAdmin = false;
-        private string? _userId = null;
+        private int? _userId = null;
 
         public AccountService(UserManager<ApplicationUser> userManager,
             IUnitOfWork unitOfWork,
@@ -47,8 +48,8 @@ namespace Techgen.Services.Services
 
             if (context?.User != null)
             {
-                _isUserModerator = context.User.IsInRole(Role.Moderator.ToString());
-                _isUserAdmin = context.User.IsInRole(Role.Admin.ToString());
+                _isUserModerator = context.User.IsInRole(Role.Moderator);
+                _isUserAdmin = context.User.IsInRole(Role.Admin);
 
                 try
                 {
@@ -65,7 +66,7 @@ namespace Techgen.Services.Services
         {
             model.Email = model.Email.Trim().ToLower();
 
-            ApplicationUser user = _unitOfWork.Repository<ApplicationUser>().FindOne(x => x.Email.ToLower() == model.Email);
+            ApplicationUser user = _unitOfWork.Repository<ApplicationUser>().Find(x => x.Email.ToLower() == model.Email);
 
             if (user != null && user.EmailConfirmed)
             {
@@ -86,7 +87,7 @@ namespace Techgen.Services.Services
                     EmailConfirmed = true
                 };
 
-                user.Profile = new Profile();
+                user.Profile = new Profile() {FirstName = "", LastName = ""};
 
                 var result = await _userManager.CreateAsync(user, model.Password);
 
@@ -97,7 +98,7 @@ namespace Techgen.Services.Services
                         Description = result.Errors.FirstOrDefault().Description
                     };
                 }
-                result = await _userManager.AddToRoleAsync(user, Role.User.ToString());
+                result = await _userManager.AddToRoleAsync(user, Role.User);
 
                 if (!result.Succeeded)
                 {
@@ -115,7 +116,7 @@ namespace Techgen.Services.Services
         {
             model.Email = model.Email.Trim().ToLower();
 
-            ApplicationUser user = _unitOfWork.Repository<ApplicationUser>().FindOne(x => x.Email.ToLower() == model.Email);
+            ApplicationUser user = _unitOfWork.Repository<ApplicationUser>().Find(x => x.Email.ToLower() == model.Email);
 
             if (user != null && user.EmailConfirmed)
             {
@@ -164,7 +165,10 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<LoginResponseModel>> Login(LoginRequestModel model)
         {
-            var user = _unitOfWork.Repository<ApplicationUser>().FindOne(x => x.Email == model.Email);
+            var user = _unitOfWork.Repository<ApplicationUser>().Get(x => x.Email == model.Email)
+                                                                .Include(w => w.UserRoles)
+                                                                    .ThenInclude(w => w.Role)
+                                                                .FirstOrDefault();
 
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password) || !user.UserRoles.Any(x => x.Role.Name == Role.User.ToString()))
             {
@@ -203,7 +207,7 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<LoginResponseModel>> AdminLogin(AdminLoginRequestModel model)
         {
-            var user = _unitOfWork.Repository<ApplicationUser>().FindOne(x => x.Email == model.Email);
+            var user = _unitOfWork.Repository<ApplicationUser>().Find(x => x.Email == model.Email);
 
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password) || !user.UserRoles.Any(x => x.Role.Name == Role.Admin.ToString() || x.Role.Name == Role.Moderator.ToString()))
             {
@@ -220,7 +224,7 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<TokenResponseModel>> RefreshTokenAsync(string refreshToken, List<string> roles)
         {
-            var token = _unitOfWork.Repository<UserToken>().FindOne(w => w.RefreshTokenHash == HashUtility.GetHash(refreshToken) && w.IsActive && w.RefreshExpiresDate > DateTime.UtcNow);
+            var token = _unitOfWork.Repository<UserToken>().Find(w => w.RefreshTokenHash == HashUtility.GetHash(refreshToken) && w.IsActive && w.RefreshExpiresDate > DateTime.UtcNow);
             if (token == null)
             {
                 return new BaseResponse<TokenResponseModel>
@@ -242,7 +246,7 @@ namespace Techgen.Services.Services
 
         public async Task Logout()
         {
-            var user = _unitOfWork.Repository<ApplicationUser>().FindOne(x => x.Id.ToString() == _userId);
+            var user = _unitOfWork.Repository<ApplicationUser>().Find(x => x.Id == _userId.Value);
 
             if (user == null)
             {

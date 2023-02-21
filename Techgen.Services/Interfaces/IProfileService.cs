@@ -14,6 +14,6 @@ namespace Techgen.Services.Interfaces
     {
         Task<IBaseResponse<UserResponseModel>> Edit(ProfileRequestModel model);
         Task<IBaseResponse<UserResponseModel>> Create(ApplicationUser user);
-        Task<IBaseResponse<UserResponseModel>> Get(string id);
+        Task<IBaseResponse<UserResponseModel>> Get();
     }
 }
