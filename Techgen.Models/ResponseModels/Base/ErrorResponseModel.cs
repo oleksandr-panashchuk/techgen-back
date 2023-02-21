@@ -6,10 +6,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Web.Mvc;
 using Techgen.Common.Constants;
 using Techgen.Common.Exceptions;
 using Techgen.Common.Extensions;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Techgen.Models.ResponseModels.Base
 {

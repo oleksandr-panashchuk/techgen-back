@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Crypto;
 using System;
 using System.Collections.Generic;
@@ -26,7 +27,7 @@ namespace Techgen.Services.Services
 
         private bool _isUserModerator = false;
         private bool _isUserAdmin = false;
-        private string? _userId = null;
+        private int? _userId = null;
 
         public ProfileService(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, IMapper mapper)
         {
@@ -54,7 +55,7 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<UserResponseModel>> Edit(ProfileRequestModel model)
         {
-            var user = _unitOfWork.Repository<ApplicationUser>().FindOne(x => x.Id.ToString() == _userId);
+            var user = _unitOfWork.Repository<ApplicationUser>().Find(x => x.Id == _userId.Value);
 
             if (user == null)
             {
@@ -64,11 +65,11 @@ namespace Techgen.Services.Services
                 };
             }
 
-            user.Profile.Age = model.Age;
-            user.Profile.Country = model.Country;
+            //user.Profile.Age = model.Age;
+            //user.Profile.Country = model.Country;
             user.UserName = model.Name;
 
-            _unitOfWork.Repository<ApplicationUser>().ReplaceOne(user);
+            _unitOfWork.Repository<ApplicationUser>().Update(user);
 
             return new BaseResponse<UserResponseModel>
             {
@@ -79,7 +80,7 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<UserResponseModel>> Create(ApplicationUser usermodel)
         {
-            var user = _unitOfWork.Repository<ApplicationUser>().FindById(usermodel.Id.ToString());
+            var user = _unitOfWork.Repository<ApplicationUser>().GetById(usermodel.Id);
                         
             if (user != null)
             {
@@ -92,7 +93,8 @@ namespace Techgen.Services.Services
 
             user.Profile = new Domain.Entities.Identity.Profile();
 
-            _unitOfWork.Repository<ApplicationUser>().InsertOne(user);
+            _unitOfWork.Repository<ApplicationUser>().Update(user);
+            _unitOfWork.SaveChanges();
 
             return new BaseResponse<UserResponseModel>
             {
@@ -101,27 +103,28 @@ namespace Techgen.Services.Services
             };
         }
 
-        public async Task<IBaseResponse<UserResponseModel>> Get(string id)
+        public async Task<IBaseResponse<UserResponseModel>> Get()
         {
-            try
+            var user = _unitOfWork.Repository<ApplicationUser>().Get(x => x.Id == _userId.Value)
+                                                                   .Include(w => w.Profile)
+                                                                   .FirstOrDefault();
+            if (user == null)
             {
-                var user = _unitOfWork.Repository<ApplicationUser>().FindOne(x => x.Id.ToString() == id);
-                var response = _mapper.Map<UserResponseModel>(user.Profile);
+                return new BaseResponse<UserResponseModel>()
+                {
+                    StatusCode = HttpStatusCode.Forbidden,
+                    Description = $"User {_userId.Value} not found"
+                };
+            }
+            var response = _mapper.Map<UserResponseModel>(user.Profile);
 
-                return new BaseResponse<UserResponseModel>()
-                {
-                    Data = response,
-                    StatusCode = HttpStatusCode.OK
-                };
-            }
-            catch (Exception ex)
+            return new BaseResponse<UserResponseModel>()
             {
-                return new BaseResponse<UserResponseModel>()
-                {
-                    StatusCode = HttpStatusCode.InternalServerError,
-                    Description = $"InternalServerError: {ex.Message}"
-                };
-            }
+                Data = response,
+                StatusCode = HttpStatusCode.OK
+            };
+
+
         }
     }
 }

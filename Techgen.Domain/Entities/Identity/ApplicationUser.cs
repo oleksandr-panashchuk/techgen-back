@@ -1,20 +1,21 @@
 ﻿using AspNetCore.Identity.MongoDbCore.Models;
+using Microsoft.AspNetCore.Identity;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Techgen.Common.Extensions;
 using Techgen.Domain.Entities.PostEntities;
-using Techgen.Domain.Extentions;
 
 namespace Techgen.Domain.Entities.Identity
 {
-    [BsonCollection("users")]
-    public class ApplicationUser : MongoIdentityUser<Guid>, IEntity
+    public partial class ApplicationUser : IdentityUser<int>, IEntity
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.String)]
-        public ObjectId Id { get; set; }
+        #region Properties
+
+        [Key]
+        public override int Id { get; set; }
 
         [DefaultValue(true)]
         public bool IsActive { get; set; }
@@ -31,16 +32,25 @@ namespace Techgen.Domain.Entities.Identity
         [DataType("DateTime")]
         public DateTime? LastVisitAt { get; set; }
 
-        [BsonElement("RecoveryCode")]
-        public string RecoveryCode { get; set; }
+        /// <summary>
+        /// Difference between server and user timezones in hours 
+        /// </summary>
+        public double TimeZoneOffset { get; set; }
 
-        [BsonElement("DigitId")]
-        public string DigitId { get; set; }
+        #endregion
 
-        [BsonElement("CreatedAt")]
-        public DateTime CreatedAt => Id.CreationTime;
+        #region Navigation Properties
 
-        #region Navigation properties
+        [InverseProperty("User")]
+        public virtual Profile Profile { get; set; }
+
+        [InverseProperty("User")]
+        public virtual ICollection<UserToken> Tokens { get; set; }
+
+        [InverseProperty("User")]
+        public virtual ICollection<VerificationToken> VerificationTokens { get; set; }
+
+        public ICollection<ApplicationUserRole> UserRoles { get; set; }
 
         [InverseProperty("User")]
         public virtual ICollection<Comment> Comments { get; set; }
@@ -51,28 +61,33 @@ namespace Techgen.Domain.Entities.Identity
         [InverseProperty("User")]
         public virtual ICollection<Like> Likes { get; set; }
 
-        [InverseProperty("User")]
-        public virtual Profile Profile { get; set; }
+        #endregion
 
-        [InverseProperty("User")]
-        public virtual ICollection<UserToken> Tokens { get; set; }
+        #region Additional Properties
 
-        public virtual ICollection<ApplicationUserRole> UserRoles { get; set; }
-
-        [InverseProperty("User")]
-        public virtual ICollection<VerificationToken> VerificationTokens { get; set; }
-
+        [NotMapped]
+        public DateTime ClientTime
+        {
+            get
+            {
+                return DateTime.UtcNow.AddHours(TimeZoneOffset);
+            }
+        }
 
         #endregion
 
+        #region Ctors
+
         public ApplicationUser()
         {
-            Tokens = new List<UserToken>();
-            UserRoles = new List<ApplicationUserRole>();
-            VerificationTokens = new List<VerificationToken>();
-            Posts = new List<Post>();
-            Comments = new List<Comment>();
-            Likes = new List<Like>();
+            Tokens = Tokens.Empty();
+            UserRoles = UserRoles.Empty();
+            VerificationTokens = VerificationTokens.Empty();
+            Posts = Posts.Empty();
+            Comments = Comments.Empty();
+            Likes = Likes.Empty();
         }
+
+        #endregion
     }
 }

@@ -36,7 +36,7 @@ namespace Techgen.Controllers.v1
         [HttpGet]
         public async Task<IActionResult> Details()
         {
-            var response = await _profileService.Get(User.Identity.Name);
+            var response = await _profileService.Get();
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 return Ok(response.Data);

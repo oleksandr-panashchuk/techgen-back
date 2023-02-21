@@ -2,37 +2,36 @@
 using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Techgen.Domain.Extentions;
 
 namespace Techgen.Domain.Entities.Identity
 {
-    [BsonCollection("userTokens")]
     public class UserToken : IEntity
     {
         #region Properties
 
-        [BsonId]
-        [BsonRepresentation(BsonType.String)]
-        public ObjectId Id { get; set; }
+        public int Id { get; set; }
 
-        public string UserId { get; set; }
+        public int UserId { get; set; }
 
         [MaxLength(200)]
+        [DefaultValue("")]
         public string AccessTokenHash { get; set; }
 
         [MaxLength(200)]
+        [DefaultValue("")]
         public string RefreshTokenHash { get; set; }
 
         public DateTime AccessExpiresDate { get; set; }
 
         public DateTime RefreshExpiresDate { get; set; }
 
-        public DateTime CreatedAt => Id.CreationTime;
+        public DateTime CreatedAt { get; set; }
 
         public bool IsActive { get; set; }
 
@@ -40,6 +39,7 @@ namespace Techgen.Domain.Entities.Identity
 
         #region Navigation Properties
 
+        [ForeignKey("UserId")]
         [InverseProperty("Tokens")]
         public virtual ApplicationUser User { get; set; }
 

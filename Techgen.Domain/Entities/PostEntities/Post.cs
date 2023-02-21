@@ -1,27 +1,25 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Techgen.Domain.Entities.Identity;
 
 namespace Techgen.Domain.Entities.PostEntities
 {
-    public class Post : IEntity
+    public class Post : IEntity<int>
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.String)]
-        public ObjectId Id { get; set; }
+        [Key]
+        public int Id { get; set; }
 
-        [BsonElement("AuthorId")]
-        [BsonRepresentation(BsonType.String)]
-        public ObjectId UserId { get; set; }
-
-        [BsonElement("Title")]
+        public int UserId { get; set; }
+        
+        [DefaultValue("")]
         public string Title { get; set; }
 
-        [BsonElement("Text")]
+        [DefaultValue("")]
         public string Text { get; set; }
 
-        [BsonElement("CreatedAt")]
         public DateTime CreatedAt { get; set; }
 
         #region Navigation properties
@@ -32,6 +30,7 @@ namespace Techgen.Domain.Entities.PostEntities
         [InverseProperty("Post")]
         public virtual ICollection<Like> Likes { get; set; }
 
+        [ForeignKey("UserId")]
         [InverseProperty("Posts")]
         public virtual ApplicationUser User { get; set; }
 

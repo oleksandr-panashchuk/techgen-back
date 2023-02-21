@@ -13,9 +13,9 @@ namespace Techgen.Services.Interfaces
     public interface IPostService
     {
         Task<IBaseResponse<PostResponseModel>> Create(PostRequestModel model);
-        Task<IBaseResponse<PostResponseModel>> Update(string id,PostRequestModel model);
-        Task<IBaseResponse<PostResponseModel>> Get(string id);
+        Task<IBaseResponse<PostResponseModel>> Update(int id,PostRequestModel model);
+        Task<IBaseResponse<PostResponseModel>> Get(int id);
         Task<IBaseResponse<IEnumerable<SmallPostResponseModel>>> GetAll();
-        Task<IBaseResponse<MessageResponseModel>> Delete (string id);
+        Task<IBaseResponse<MessageResponseModel>> Delete (int id);
     }
 }

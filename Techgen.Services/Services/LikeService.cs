@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +22,7 @@ namespace Techgen.Services.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IMapper _mapper;
 
-        private string? _userId = null;
+        private int? _userId = null;
 
         public LikeService(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, IMapper mapper)
         {
@@ -44,9 +45,9 @@ namespace Techgen.Services.Services
             }
         }
 
-        public async Task<IBaseResponse<PostResponseModel>> Create(string postId)
+        public async Task<IBaseResponse<PostResponseModel>> Create(int postId)
         {
-            var post = _unitOfWork.Repository<Post>().FindById(postId);      
+            var post = _unitOfWork.Repository<Post>().Get(x=>x.Id == postId).Include(w => w.Likes).FirstOrDefault();      
             
             if (post == null)
                 return new BaseResponse<PostResponseModel>() { StatusCode = System.Net.HttpStatusCode.NotFound, Description = "cannot find post" };
@@ -55,18 +56,19 @@ namespace Techgen.Services.Services
             if (like != null)
                 await Delete(postId);
            
-            like = new Like { PostId = postId, UserId = _userId };
+            like = new Like { PostId = postId, UserId = _userId.Value};
             post.Likes.Add(like);
 
-            _unitOfWork.Repository<Post>().ReplaceOne(post);
+            _unitOfWork.Repository<Post>().Update(post);
+            _unitOfWork.SaveChanges();
 
             var response = _mapper.Map<PostResponseModel>(post);
             return new BaseResponse<PostResponseModel>() { Data = response, StatusCode = System.Net.HttpStatusCode.OK };
         }
 
-        public async Task<IBaseResponse<PostResponseModel>> Delete(string postId)
+        public async Task<IBaseResponse<PostResponseModel>> Delete(int postId)
         {
-            var post = _unitOfWork.Repository<Post>().FindById(postId);          
+            var post = _unitOfWork.Repository<Post>().GetById(postId);          
             if (post == null)
                 return new BaseResponse<PostResponseModel>() { StatusCode = System.Net.HttpStatusCode.NotFound, Description = "cannot find post" };
 
@@ -76,7 +78,8 @@ namespace Techgen.Services.Services
             
             post.Likes.Remove(like);              
 
-            _unitOfWork.Repository<Post>().ReplaceOne(post);
+            _unitOfWork.Repository<Post>().Update(post);
+            _unitOfWork.SaveChanges();
 
             var response = _mapper.Map<PostResponseModel>(post);
             return new BaseResponse<PostResponseModel>() { Data = response, StatusCode = System.Net.HttpStatusCode.OK };

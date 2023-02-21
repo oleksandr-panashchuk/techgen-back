@@ -32,7 +32,7 @@ namespace Techgen.Controllers.Admin
         }
 
         [HttpPost("edit/{id}")]
-        public async Task<IActionResult> EditPost([FromBody] PostRequestModel model, [FromRoute] string id)
+        public async Task<IActionResult> EditPost([FromBody] PostRequestModel model, [FromRoute] int id)
         {
             var response = await _postService.Update(id, model);
             if (response.StatusCode == System.Net.HttpStatusCode.OK)
@@ -41,7 +41,7 @@ namespace Techgen.Controllers.Admin
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePost([FromRoute] string id)
+        public async Task<IActionResult> DeletePost([FromRoute] int id)
         {
             var response = await _postService.Delete(id);
             if (response.StatusCode == System.Net.HttpStatusCode.OK)
