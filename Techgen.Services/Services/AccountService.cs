@@ -137,7 +137,7 @@ namespace Techgen.Services.Services
                     EmailConfirmed = true
                 };
 
-                user.Profile = new Profile();
+                user.Profile = new Profile() {FirstName ="", LastName=""};
 
                 var result = await _userManager.CreateAsync(user, model.Password);
 
@@ -207,7 +207,10 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<LoginResponseModel>> AdminLogin(AdminLoginRequestModel model)
         {
-            var user = _unitOfWork.Repository<ApplicationUser>().Find(x => x.Email == model.Email);
+            var user = _unitOfWork.Repository<ApplicationUser>().Get(x => x.Email == model.Email)
+                                                                .Include(w => w.UserRoles)
+                                                                    .ThenInclude(w => w.Role)
+                                                                .FirstOrDefault();
 
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password) || !user.UserRoles.Any(x => x.Role.Name == Role.Admin.ToString() || x.Role.Name == Role.Moderator.ToString()))
             {
@@ -246,7 +249,9 @@ namespace Techgen.Services.Services
 
         public async Task Logout()
         {
-            var user = _unitOfWork.Repository<ApplicationUser>().Find(x => x.Id == _userId.Value);
+            var user = _unitOfWork.Repository<ApplicationUser>().Get(x => x.Id == _userId.Value)
+                                                                .Include(w => w.Tokens)
+                                                                .FirstOrDefault();
 
             if (user == null)
             {

@@ -27,10 +27,13 @@ namespace Techgen.Domain.Entities.Identity
         [DefaultValue("")]
         public string RefreshTokenHash { get; set; }
 
+        [DataType(DataType.DateTime)]
         public DateTime AccessExpiresDate { get; set; }
 
+        [DataType(DataType.DateTime)]
         public DateTime RefreshExpiresDate { get; set; }
 
+        [DataType(DataType.DateTime)]
         public DateTime CreatedAt { get; set; }
 
         public bool IsActive { get; set; }

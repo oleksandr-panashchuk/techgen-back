@@ -96,15 +96,17 @@ namespace Techgen.Services.Services
             var post = _unitOfWork.Repository<Post>().Get(x => x.Title == model.Name).FirstOrDefault(); 
 
             if (post != null)
-                return new BaseResponse<PostResponseModel>() { StatusCode = System.Net.HttpStatusCode.NotFound, Description="post with such title already exist"};
+                return new BaseResponse<PostResponseModel>() { StatusCode = System.Net.HttpStatusCode.Forbidden, Description="post with such title already exist"};
 
             post = new Post()
             {
                 Title = model.Name,
                 Text = model.Text,
+                UserId = _userId.Value
             };
 
             _unitOfWork.Repository<Post>().Insert(post);
+            _unitOfWork.SaveChanges();
 
             var response = _mapper.Map<PostResponseModel>(post);
             return new BaseResponse<PostResponseModel>() {Data = response, StatusCode = System.Net.HttpStatusCode.OK };

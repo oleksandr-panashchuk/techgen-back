@@ -49,7 +49,7 @@ namespace Techgen.Controllers.v1
         /// </remarks>
         /// <returns>HTTP 201 with user email and info about email status or HTTP 4XX, 500 with error message</returns>
         [AllowAnonymous]
-        [SwaggerResponse(201, ResponseMessages.SuccessfulRegistration, typeof(JsonResponse<RegisterResponseModel>))]
+        [SwaggerResponse(201, ResponseMessages.SuccessfulRegistration, typeof(JsonResponse<IBaseResponse<RegisterResponseModel>>))]
         [SwaggerResponse(400, ResponseMessages.InvalidCredentials, typeof(ErrorResponseModel))]
         [SwaggerResponse(422, ResponseMessages.EmailAlreadyRegistered, typeof(ErrorResponseModel))]
         [SwaggerResponse(500, ResponseMessages.InternalServerError, typeof(ErrorResponseModel))]
@@ -60,7 +60,66 @@ namespace Techgen.Controllers.v1
             return Json(new JsonResponse<IBaseResponse<RegisterResponseModel>>(response));
         }
 
-        // POST api/v1/account
+        #region Admin
+        // POST api/v1/account/registeradmin
+        /// <summary>
+        /// Register new admin
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST api/v1/account/registeradmin
+        ///     {                
+        ///         "email" : "test@example.com",
+        ///         "password" : "1simplepassword",
+        ///         "confirmPassword" : "1simplepassword"
+        ///     }
+        ///
+        /// </remarks>
+        /// <returns>HTTP 201 with user email and info about email status or HTTP 4XX, 500 with error message</returns>
+        [AllowAnonymous]
+        [SwaggerResponse(201, ResponseMessages.SuccessfulRegistration, typeof(JsonResponse<IBaseResponse<RegisterResponseModel>>))]
+        [SwaggerResponse(400, ResponseMessages.InvalidCredentials, typeof(ErrorResponseModel))]
+        [SwaggerResponse(422, ResponseMessages.EmailAlreadyRegistered, typeof(ErrorResponseModel))]
+        [SwaggerResponse(500, ResponseMessages.InternalServerError, typeof(ErrorResponseModel))]
+        [HttpPost("registeradmin")]
+        public async Task<IActionResult> RegisterAdmin([FromBody] RegisterRequestModel model)
+        {
+            var response = await _accountService.RegisterAdmin(model);
+            return Json(new JsonResponse<IBaseResponse<RegisterResponseModel>>(response));
+        }
+
+        // POST api/v1/account/registeradmin
+        /// <summary>
+        /// Register new admin
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST api/v1/account/registeradmin
+        ///     {                
+        ///         "email" : "test@example.com",
+        ///         "password" : "1simplepassword",
+        ///         "confirmPassword" : "1simplepassword"
+        ///     }
+        ///
+        /// </remarks>
+        /// <returns>HTTP 201 with user email and info about email status or HTTP 4XX, 500 with error message</returns>
+        [AllowAnonymous]
+        [SwaggerResponse(201, ResponseMessages.SuccessfulLogin, typeof(JsonResponse<IBaseResponse<LoginResponseModel>>))]
+        [SwaggerResponse(400, ResponseMessages.InvalidCredentials, typeof(ErrorResponseModel))]
+        [SwaggerResponse(422, ResponseMessages.EmailAlreadyRegistered, typeof(ErrorResponseModel))]
+        [SwaggerResponse(500, ResponseMessages.InternalServerError, typeof(ErrorResponseModel))]
+        [HttpPost("loginadmin")]
+        public async Task<IActionResult> LoginAdmin([FromBody] AdminLoginRequestModel model)
+        {
+            var response = await _accountService.AdminLogin(model);
+            return Json(new JsonResponse<IBaseResponse<LoginResponseModel>>(response));
+        }
+
+        #endregion
+
+        // POST api/v1/account/login
         /// <summary>
         /// Login
         /// </summary>
@@ -77,7 +136,7 @@ namespace Techgen.Controllers.v1
         /// </remarks>
         /// <returns>HTTP 201 with token and user response model or HTTP 4XX, 500 with error message</returns>
         [AllowAnonymous]
-        [SwaggerResponse(201, ResponseMessages.SuccessfulRegistration, typeof(JsonResponse<IBaseResponse<LoginResponseModel>>))]
+        [SwaggerResponse(201, ResponseMessages.SuccessfulLogin, typeof(JsonResponse<IBaseResponse<LoginResponseModel>>))]
         [SwaggerResponse(400, ResponseMessages.InvalidCredentials, typeof(ErrorResponseModel))]
         [SwaggerResponse(422, ResponseMessages.EmailAlreadyRegistered, typeof(ErrorResponseModel))]
         [SwaggerResponse(500, ResponseMessages.InternalServerError, typeof(ErrorResponseModel))]
@@ -89,9 +148,26 @@ namespace Techgen.Controllers.v1
             return Json(new JsonResponse<IBaseResponse<LoginResponseModel>>(response));
         }
 
+        // POST api/v1/account/logout
+        /// <summary>
+        /// Logout
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST api/v1/acoount/logout
+        ///     {                
+        ///     
+        ///     }
+        ///
+        /// </remarks>
+        /// <returns>HTTP 201 with message or HTTP 4XX, 500 with error message</returns>
         [Authorize]
-        [HttpPost]
-        [Route("logout")]
+        [SwaggerResponse(201, ResponseMessages.RequestSuccessful, typeof(JsonResponse<IBaseResponse<LoginResponseModel>>))]
+        [SwaggerResponse(400, ResponseMessages.InvalidCredentials, typeof(ErrorResponseModel))]
+        [SwaggerResponse(422, ResponseMessages.EmailAlreadyRegistered, typeof(ErrorResponseModel))]
+        [SwaggerResponse(500, ResponseMessages.InternalServerError, typeof(ErrorResponseModel))]
+        [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
             await _accountService.Logout();

@@ -46,6 +46,15 @@ namespace Techgen.Services
             #region Post model
 
             CreateMap<Post, PostResponseModel>()
+                .ForMember(x => x.LikesCount, opt => opt.MapFrom(x => x.Likes.Count))
+                .ForMember(x => x.Name, opt => opt.MapFrom(x => x.Title))
+                .ForMember(x => x.Id, opt => opt.MapFrom(x => x.Id))
+                .ForMember(x => x.Text, opt => opt.MapFrom(x => x.Text))
+                .ForMember(x => x.Comments, opt => opt.MapFrom(x => x.Comments));
+
+            CreateMap<Post, SmallPostResponseModel>()
+                .ForMember(x => x.Id, opt => opt.MapFrom(x => x.Id))
+                .ForMember(x => x.Name, opt => opt.MapFrom(x => x.Title))
                 .ForMember(x => x.LikesCount, opt => opt.MapFrom(x => x.Likes.Count));
 
             #endregion

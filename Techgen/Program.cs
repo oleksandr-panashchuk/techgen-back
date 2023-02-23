@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Versioning;
@@ -21,6 +23,7 @@ using NLog.Web;
 using Swashbuckle.AspNetCore.Filters;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Configuration;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -33,12 +36,16 @@ using Techgen.Common.Utilities;
 using Techgen.DAL;
 using Techgen.DAL.Abstract;
 using Techgen.DAL.Migrations;
+using Techgen.DAL.Repository;
+using Techgen.DAL.UnitOfWork;
 using Techgen.Domain.Entities.Identity;
 using Techgen.EmailService;
 using Techgen.Helpers;
 using Techgen.Models.ResponseModels.Base;
 using Techgen.ResourceLibrary;
 using Techgen.Services;
+using Techgen.Services.Interfaces;
+using Techgen.Services.Services;
 
 var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 
@@ -46,8 +53,7 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    var sp = builder.Services.BuildServiceProvider();
-    var serviceScopeFactory = sp.GetRequiredService<IServiceScopeFactory>();
+    
 
     IConfiguration configuration = builder.Configuration;
 
@@ -57,82 +63,53 @@ try
         options.EnableSensitiveDataLogging(false);
     });
 
+    builder.Services.AddCors();
 
-    // Adding Authentication
-    builder.Services.AddAuthentication(options =>
+    builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-                .AddJwtBearer(/*JwtBearerDefaults.AuthenticationScheme, */options =>
-                {
-                    options.RequireHttpsMetadata = true;
-                    options.SaveToken = true;
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidIssuer = AuthOptions.ISSUER,
-                        ValidateAudience = true,
-                        ValidateActor = false,
-                        ValidAudience = AuthOptions.AUDIENCE,
-                        ValidateLifetime = true,
-                        LifetimeValidator = (DateTime? notBefore, DateTime? expires, SecurityToken securityToken, TokenValidationParameters validationParameters) =>
-                        {
-                            var jwt = securityToken as JwtSecurityToken;
+        // Password settings
+        options.Password.RequireDigit = true;
+        options.Password.RequiredLength = 6;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireLowercase = false;
+        options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+#=";
+    }).AddEntityFrameworkStores<DataContext>().AddDefaultTokenProviders();
 
-                            if (!notBefore.HasValue || !expires.HasValue || DateTime.Compare(expires.Value, DateTime.UtcNow) <= 0)
-                            {
-                                return false;
-                            }
-
-                            if (jwt == null)
-                                return false;
-
-                            var isRefresStr = jwt.Claims.FirstOrDefault(t => t.Type == "isRefresh")?.Value;
-
-                            if (isRefresStr == null)
-                                return false;
-
-                            var isRefresh = Convert.ToBoolean(isRefresStr);
-
-                            if (!isRefresh)
-                            {
-                                try
-                                {
-                                    using (var scope = serviceScopeFactory.CreateScope())
-                                    {
-                                        var hash = HashUtility.GetHash(jwt.RawData);
-                                        return scope.ServiceProvider.GetService<IRepository<UserToken>>().Find(t => t.AccessTokenHash == hash && t.IsActive) != null;
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    var logger = sp.GetService<ILogger<Program>>();
-                                    logger.LogError(DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") + ": Exception occured in token validator. Exception message: " + ex.Message + ". InnerException: " + ex.InnerException?.Message);
-                                    return false;
-                                }
-                            }
-
-                            return false;
-                        },
-                        IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey(),
-                        ValidateIssuerSigningKey = true
-                    };
-                });
-
-    builder.Services.AddMvc()
-    .AddNewtonsoftJson(options =>
+    builder.Services.Configure<DataProtectionTokenProviderOptions>(o =>
     {
-        options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
-    })
-    .ConfigureApiBehaviorOptions(o => o.SuppressModelStateInvalidFilter = true)
-    .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+        o.Name = "Default";
+        o.TokenLifespan = TimeSpan.FromHours(12);
+    });
 
-    builder.Services.AddControllers();
-    builder.Services.AddRazorPages();
+    //EmailService
+    var emailConfig = configuration
+            .GetSection("EmailConfiguration")
+            .Get<EmailConfiguration>();
+    builder.Services.AddSingleton(emailConfig);
 
+    builder.Services.AddScoped<IDataContext>(provider => provider.GetService<DataContext>());
+    builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+    builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+    builder.Services.AddScoped<IRepository<UserToken>,Repository<UserToken>>();
+    builder.Services.AddTransient<IAccountService, AccountService>();
+    builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+    builder.Services.AddScoped<IJWTService, JWTService>();
+    builder.Services.AddScoped<IEmailSender, EmailSender>();
+    builder.Services.AddScoped<IProfileService, ProfileService>();
+    builder.Services.AddScoped<IPostService, PostService>();
+    builder.Services.AddScoped<ICommentService, CommentService>();
+    builder.Services.AddScoped<ILikeService, LikeService>();
+    builder.Services.AddScoped<IRoadmapService, RoadmapService>();
 
+    //impliment auto mapper config
+    var config = new AutoMapper.MapperConfiguration(cfg =>
+    {
+        cfg.AddProfile(new AutoMapperProfileConfiguration());
+    });
+    builder.Services.AddSingleton(config.CreateMapper());
+
+    builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
     // Add ApiExplorer to discover versions
     builder.Services.AddVersionedApiExplorer(setup =>
@@ -151,86 +128,155 @@ try
                                                         new MediaTypeApiVersionReader("x-api-version"));
     });
 
-    builder.Services.AddSwaggerGen(options =>
+    builder.Services.AddMvc(options =>
     {
+        // Allow use optional parameters in actions
+        options.AllowEmptyInputInBodyModelBinding = true;
+        options.EnableEndpointRouting = false;
+    })
+            .AddNewtonsoftJson(options =>
+            {
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+            })
+            .ConfigureApiBehaviorOptions(o => o.SuppressModelStateInvalidFilter = true)
+            .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
 
-        var basePath = PlatformServices.Default.Application.ApplicationBasePath;
-        var fileName = typeof(Program).GetTypeInfo().Assembly.GetName().Name + ".xml";
+    builder.Services.AddControllers();
+    builder.Services.AddRazorPages();
 
-        string XmlCommentsFilePath = Path.Combine(basePath, fileName);
-
-        options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+    if (!builder.Environment.IsProduction()) 
+    {
+        builder.Services.AddSwaggerGen(options =>
         {
-            In = ParameterLocation.Header,
-            Description = "Access token",
-            Name = "Authorization",
-            Type = SecuritySchemeType.ApiKey
+            options.EnableAnnotations();
+
+            var basePath = PlatformServices.Default.Application.ApplicationBasePath;
+            var fileName = typeof(Program).GetTypeInfo().Assembly.GetName().Name + ".xml";
+
+            string XmlCommentsFilePath = Path.Combine(basePath, fileName);
+
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+            {
+                In = ParameterLocation.Header,
+                Description = "Access token",
+                Name = "Authorization",
+                Type = SecuritySchemeType.ApiKey
+            });
+
+            options.OrderActionsBy(x => x.ActionDescriptor.DisplayName);
+
+            // add a custom operation filter which sets default values
+
+            // integrate xml comments
+            options.IncludeXmlComments(XmlCommentsFilePath);
+            options.IgnoreObsoleteActions();
+
+            options.OperationFilter<DefaultValues>();
+            options.OperationFilter<SecurityRequirementsOperationFilter>("Bearer");
+
+            // for deep linking
+            options.CustomOperationIds(e => $"{e.HttpMethod}_{e.RelativePath.Replace('/', '-').ToLower()}");
+
         });
 
-        options.OrderActionsBy(x => x.ActionDescriptor.DisplayName);
+        // instead of options.DescribeAllEnumsAsStrings()
+        builder.Services.AddSwaggerGenNewtonsoftSupport();
+    }
 
-        // add a custom operation filter which sets default values
+    var sp = builder.Services.BuildServiceProvider();
+    var serviceScopeFactory = sp.GetRequiredService<IServiceScopeFactory>();
 
-        // integrate xml comments
-        options.IncludeXmlComments(XmlCommentsFilePath);
-        options.IgnoreObsoleteActions();
+    // Adding Authentication
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(/*JwtBearerDefaults.AuthenticationScheme, */options =>
+    {
+        options.RequireHttpsMetadata = true;
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = AuthOptions.ISSUER,
+            ValidateAudience = true,
+            ValidateActor = false,
+            ValidAudience = AuthOptions.AUDIENCE,
+            ValidateLifetime = true,
+            LifetimeValidator = (DateTime? notBefore, DateTime? expires, SecurityToken securityToken, TokenValidationParameters validationParameters) =>
+            {
+                var jwt = securityToken as JwtSecurityToken;
 
-        options.OperationFilter<DefaultValues>();
-        options.OperationFilter<SecurityRequirementsOperationFilter>("Bearer");
+                if (!notBefore.HasValue || !expires.HasValue || DateTime.Compare(expires.Value, DateTime.UtcNow) <= 0)
+                {
+                    return false;
+                }
 
-        // for deep linking
-        options.CustomOperationIds(e => $"{e.HttpMethod}_{e.RelativePath.Replace('/', '-').ToLower()}");
+                if (jwt == null)
+                    return false;
 
+                var isRefresStr = jwt.Claims.FirstOrDefault(t => t.Type == "isRefresh")?.Value;
+
+                if (isRefresStr == null)
+                    return false;
+
+                var isRefresh = Convert.ToBoolean(isRefresStr);
+
+                if (!isRefresh)
+                {
+                    try
+                    {
+                        using (var scope = serviceScopeFactory.CreateScope())
+                        {
+                            var hash = HashUtility.GetHash(jwt.RawData);
+                            return scope.ServiceProvider.GetService<IRepository<UserToken>>().Find(t => t.AccessTokenHash == hash && t.IsActive) != null;
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        var logger = sp.GetService<ILogger<Program>>();
+                        logger.LogError(DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") + ": Exception occured in token validator. Exception message: " + ex.Message + ". InnerException: " + ex.InnerException?.Message);
+                        return false;
+                    }
+                }
+
+                return false;
+            },
+            IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey(),
+            ValidateIssuerSigningKey = true
+        };
     });
+    builder.Services.AddRouting();
+    builder.Services.AddMemoryCache();
 
-    // instead of options.DescribeAllEnumsAsStrings()
-    builder.Services.AddSwaggerGenNewtonsoftSupport();
-
-    builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
-
-    //EmailService
-    var emailConfig = configuration
-            .GetSection("EmailConfiguration")
-            .Get<EmailConfiguration>();
-    builder.Services.AddSingleton(emailConfig);
-
-
-    builder.Services.AddScoped<IDataContext, DataContext>();
-    builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-
-
-    builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
-    {
-        // Password settings
-        options.Password.RequireDigit = true;
-        options.Password.RequiredLength = 6;
-        options.Password.RequireNonAlphanumeric = false;
-        options.Password.RequireUppercase = false;
-        options.Password.RequireLowercase = false;
-        options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+#=";
-    }).AddEntityFrameworkStores<DataContext>().AddDefaultTokenProviders();
-
-    builder.Services.Configure<DataProtectionTokenProviderOptions>(o =>
-    {
-        o.Name = "Default";
-        o.TokenLifespan = TimeSpan.FromHours(12);
-    }); ;
-
-    //impliment auto mapper config
-    var config = new AutoMapper.MapperConfiguration(cfg =>
-    {
-        cfg.AddProfile(new AutoMapperProfileConfiguration());
-    });
-    builder.Services.AddSingleton(config.CreateMapper());
-
-    builder.Services.InitializeRepositories();
-    builder.Services.InitializeServices();
 
     // NLog: Setup NLog for Dependency injection
     builder.Logging.ClearProviders();
     builder.Host.UseNLog();
 
     var app = builder.Build();
+
+    app.UseDefaultFiles();
+
+    var cultures = configuration.GetSection("SupportedCultures").Get<string[]>();
+
+    var supportedCultures = new List<CultureInfo>();
+
+    foreach (var culture in cultures)
+    {
+        supportedCultures.Add(new CultureInfo(culture));
+    }
+
+    app.UseRequestLocalization(new RequestLocalizationOptions
+    {
+        DefaultRequestCulture = new RequestCulture("en"),
+        SupportedCultures = supportedCultures,
+        SupportedUICultures = supportedCultures
+    });
+
     #region Cookie auth
 
     app.UseCookiePolicy(new CookiePolicyOptions
@@ -250,6 +296,29 @@ try
     });
 
     #endregion
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseDeveloperExceptionPage();
+        app.UseForwardedHeaders(new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor,
+
+            // IIS is also tagging a X-Forwarded-For header on, so we need to increase this limit, 
+            // otherwise the X-Forwarded-For we are passing along from the browser will be ignored
+            ForwardLimit = 2
+        });
+    }
+
+    if (!Directory.Exists("Logs"))
+    {
+        Directory.CreateDirectory("Logs");
+    }
+
+    var webSocketOptions = new WebSocketOptions()
+    {
+        KeepAliveInterval = TimeSpan.FromSeconds(5)
+    };
 
     var appBasePath = System.IO.Directory.GetCurrentDirectory();
     NLog.GlobalDiagnosticsContext.Set("appbasepath", appBasePath);
@@ -287,15 +356,7 @@ try
         NLog.LogManager.Shutdown();
     }
 
-    // Configure the HTTP request pipeline.
-    if (!app.Environment.IsDevelopment())
-    {
-        app.UseExceptionHandler("/Home/Error");
-        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-        app.UseHsts();
-    }
-
-    if (app.Environment.IsDevelopment())
+    if (!app.Environment.IsProduction())
     {
         app.UseSwagger(options =>
         {
@@ -420,8 +481,6 @@ try
 
     app.UseAuthentication();
     app.UseAuthorization();
-
-    app.MapRazorPages();
 
     app.UseEndpoints(endpoints =>
     {
