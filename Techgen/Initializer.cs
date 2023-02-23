@@ -16,20 +16,11 @@ namespace Techgen
     {
         public static void InitializeRepositories(this IServiceCollection services)
         {
-            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         }
 
         public static void InitializeServices(this IServiceCollection services)
         {
-            services.AddTransient<IAccountService, AccountService>();
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
-            services.AddScoped<IJWTService, JWTService>();
-            services.AddScoped<IEmailSender, EmailSender>();
-            services.AddScoped<IProfileService, ProfileService>();
-            services.AddScoped<IPostService, PostService>();
-            services.AddScoped<ICommentService, CommentService>();
-            services.AddScoped<ILikeService, LikeService>();
-            services.AddScoped<IRoadmapService, RoadmapService>();
+            
 
         }
     }

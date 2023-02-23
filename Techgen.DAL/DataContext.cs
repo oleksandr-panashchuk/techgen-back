@@ -8,6 +8,7 @@ using System.Reflection;
 using Techgen.DAL.Abstract;
 using Techgen.Domain.Entities.Identity;
 using Techgen.Domain.Entities.PostEntities;
+using Techgen.Domain.Entities.RoadmapEntity;
 
 namespace Techgen.DAL
 {
@@ -28,6 +29,7 @@ namespace Techgen.DAL
         public virtual DbSet<Post> Posts { get; set; }
         public virtual DbSet<Comment> Comments { get; set; }
         public virtual DbSet<Like> Likes { get; set; }
+        public virtual DbSet<Roadmap> Roadmaps { get; set; }
 
 
         #region DbSet for stored procedures
