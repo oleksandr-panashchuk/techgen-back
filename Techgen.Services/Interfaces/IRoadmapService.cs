@@ -13,12 +13,12 @@ namespace Techgen.Services.Interfaces
 {
     public interface IRoadmapService
     {
-        public Task<IBaseResponse<RoadmapModelResponse>> Create(IFormFile image, string markdown);
+        public Task<IBaseResponse<RoadmapResponseModel>> Create(IFormFile image, string markdown);
 
-        public IBaseResponse<RoadmapModelResponse> Get(int id);
+        public IBaseResponse<RoadmapResponseModel> Get(int id);
 
-        public IBaseResponse<RoadmapModelResponse> Delete(int id);
+        public IBaseResponse<RoadmapResponseModel> Delete(int id);
 
-        public Task<IBaseResponse<RoadmapModelResponse>> Update(int id, RoadmapRequestModel model);
+        public Task<IBaseResponse<RoadmapResponseModel>> Update(int id, RoadmapRequestModel model);
     }
 }

@@ -102,7 +102,7 @@ namespace Techgen.Controllers.Admin
         public async Task<IActionResult> DeletePost([FromRoute] int id)
         {
             var response = await _postService.Delete(id);
-            return Json(response);
+            return Json(new JsonResponse<IBaseResponse<MessageResponseModel>>(response));
         }
     }
 }

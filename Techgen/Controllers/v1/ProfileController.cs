@@ -1,18 +1,24 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using System.Net;
 using Techgen.Models.RequestModels;
+using Techgen.Models.ResponseModels;
+using Techgen.Models.ResponseModels.Base;
+using Techgen.ResourceLibrary;
 using Techgen.Services.Interfaces;
 
 namespace Techgen.Controllers.v1
 {
-    [Route("api/[controller]")]
     [ApiController]
-    public class ProfileController : ControllerBase
+    [ApiVersion("1.0")]
+    [Produces("application/json")]
+    [Route("api/v{api-version:apiVersion}/[controller]")]
+    public class ProfileController : _BaseApiController
     {
         private readonly IProfileService _profileService;
 
-        public ProfileController(IProfileService profileService)
+        public ProfileController(IStringLocalizer<ErrorsResource> errorsLocalizer, IProfileService profileService) : base(errorsLocalizer)
         {
             _profileService = profileService;
         }
@@ -21,15 +27,8 @@ namespace Techgen.Controllers.v1
         [HttpPost]
         public async Task<IActionResult> Edit([FromBody] ProfileRequestModel profile)
         {
-            if (ModelState.IsValid)
-            {
-                var response = await _profileService.Edit(profile);
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    return Ok(new { Message = "Edit profile Successfully" });
-                }
-            }
-            return new BadRequestObjectResult(new { Message = "Failed to edit profile" });
+            var response = await _profileService.Edit(profile);
+            return Json(new JsonResponse<IBaseResponse<UserResponseModel>>(response));
         }
 
         [Route("details")]
@@ -37,11 +36,7 @@ namespace Techgen.Controllers.v1
         public async Task<IActionResult> Details()
         {
             var response = await _profileService.Get();
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                return Ok(response.Data);
-            }
-            return new BadRequestObjectResult(new { Message = "Something went wrong" });
+            return Json(new JsonResponse<IBaseResponse<UserResponseModel>>(response));
         }
     }
 }

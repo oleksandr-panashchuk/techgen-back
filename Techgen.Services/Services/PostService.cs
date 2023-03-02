@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -80,7 +81,10 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<PostResponseModel>> Get(int id)
         {
-            var post = _unitOfWork.Repository<Post>().GetById(id);
+            var post = _unitOfWork.Repository<Post>().Get(x => x.Id == id)
+                                                     .Include(w => w.Likes)
+                                                     .Include(w => w.Comments)
+                                                     .FirstOrDefault();
 
             if (post == null)
                 return new BaseResponse<PostResponseModel>() {StatusCode = System.Net.HttpStatusCode.NotFound, Description="post does not exist"};
