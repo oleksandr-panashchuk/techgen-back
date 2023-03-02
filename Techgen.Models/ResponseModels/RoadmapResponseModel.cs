@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Techgen.Models.ResponseModels
 {
-    public class RoadmapModelResponse
+    public class RoadmapResponseModel
     {
         public int Id { get; set; }
         public string ImageName { get; set; }

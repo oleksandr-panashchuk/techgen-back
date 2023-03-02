@@ -27,11 +27,11 @@ namespace Techgen.Services.Services
             _appEnvironment = appEnvironment;
         }
 
-        public async Task<IBaseResponse<RoadmapModelResponse>> Create(IFormFile image, string markdown)
+        public async Task<IBaseResponse<RoadmapResponseModel>> Create(IFormFile image, string markdown)
         {
             if (image == null && markdown == null)
             {
-                return new BaseResponse<RoadmapModelResponse> { Description = "roadmap is null", StatusCode = System.Net.HttpStatusCode.BadRequest };
+                return new BaseResponse<RoadmapResponseModel> { Description = "roadmap is null", StatusCode = System.Net.HttpStatusCode.BadRequest };
             }
 
             var roadmap = new Roadmap();
@@ -57,50 +57,50 @@ namespace Techgen.Services.Services
             await _unitOfWork.Repository<Roadmap>().InsertAsync(roadmap);
             await _unitOfWork.SaveChangesAsync();
 
-            var response = _mapper.Map<RoadmapModelResponse>(roadmap);
-            return new BaseResponse<RoadmapModelResponse>
+            var response = _mapper.Map<RoadmapResponseModel>(roadmap);
+            return new BaseResponse<RoadmapResponseModel>
             {
                 Data = response,
                 StatusCode = System.Net.HttpStatusCode.OK
             };
         }
 
-        public IBaseResponse<RoadmapModelResponse> Get(int id)
+        public IBaseResponse<RoadmapResponseModel> Get(int id)
         {
             var roadmap = _unitOfWork.Repository<Roadmap>().GetById(id);
             if(roadmap == null)
             {
-                return new BaseResponse<RoadmapModelResponse> { Description = "that roadmap does not exist", StatusCode = System.Net.HttpStatusCode.NotFound };
+                return new BaseResponse<RoadmapResponseModel> { Description = "that roadmap does not exist", StatusCode = System.Net.HttpStatusCode.NotFound };
             }
 
-            var response = _mapper.Map<RoadmapModelResponse>(roadmap);
-            return new BaseResponse<RoadmapModelResponse>{ Data = response, StatusCode = System.Net.HttpStatusCode.OK };
+            var response = _mapper.Map<RoadmapResponseModel>(roadmap);
+            return new BaseResponse<RoadmapResponseModel>{ Data = response, StatusCode = System.Net.HttpStatusCode.OK };
         }
 
-        public IBaseResponse<RoadmapModelResponse> Delete (int id)
+        public IBaseResponse<RoadmapResponseModel> Delete (int id)
         {
             var roadmap = _unitOfWork.Repository<Roadmap>().GetById(id);
             if (roadmap == null)
             {
-                return new BaseResponse<RoadmapModelResponse>() { Description = "that roadmap does not exist", StatusCode = System.Net.HttpStatusCode.NotFound };
+                return new BaseResponse<RoadmapResponseModel>() { Description = "that roadmap does not exist", StatusCode = System.Net.HttpStatusCode.NotFound };
             }
               
             _unitOfWork.Repository<Roadmap>().DeleteById(id);
             _unitOfWork.SaveChanges();
-            return new BaseResponse<RoadmapModelResponse>() { Description = $"{id} was deleted", StatusCode = System.Net.HttpStatusCode.OK };
+            return new BaseResponse<RoadmapResponseModel>() { Description = $"{id} was deleted", StatusCode = System.Net.HttpStatusCode.OK };
         }
 
-        public async Task<IBaseResponse<RoadmapModelResponse>> Update(int id, RoadmapRequestModel model)
+        public async Task<IBaseResponse<RoadmapResponseModel>> Update(int id, RoadmapRequestModel model)
         {
             if (model.Image == null && model.Markdown == null)
             {
-                return new BaseResponse<RoadmapModelResponse> { Description = "roadmap is null", StatusCode = System.Net.HttpStatusCode.BadRequest };
+                return new BaseResponse<RoadmapResponseModel> { Description = "roadmap is null", StatusCode = System.Net.HttpStatusCode.BadRequest };
             }
 
             var roadmap = _unitOfWork.Repository<Roadmap>().GetById(id);
             if (roadmap == null)
             {
-                return new BaseResponse<RoadmapModelResponse>() { Description = "that roadmap does not exist", StatusCode = System.Net.HttpStatusCode.NotFound };
+                return new BaseResponse<RoadmapResponseModel>() { Description = "that roadmap does not exist", StatusCode = System.Net.HttpStatusCode.NotFound };
             }
 
             if(model.Image != null)
@@ -124,8 +124,8 @@ namespace Techgen.Services.Services
             _unitOfWork.Repository<Roadmap>().Update(roadmap);
             _unitOfWork.SaveChanges();
 
-            var response = _mapper.Map<RoadmapModelResponse>(roadmap);
-            return new BaseResponse<RoadmapModelResponse> { Data = response, StatusCode = System.Net.HttpStatusCode.OK };
+            var response = _mapper.Map<RoadmapResponseModel>(roadmap);
+            return new BaseResponse<RoadmapResponseModel> { Data = response, StatusCode = System.Net.HttpStatusCode.OK };
         }
     }
 }

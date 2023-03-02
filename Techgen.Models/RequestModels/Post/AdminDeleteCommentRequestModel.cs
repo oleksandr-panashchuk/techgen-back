@@ -8,7 +8,7 @@ namespace Techgen.Models.RequestModels.Post
 {
     public class AdminDeleteCommentRequestModel
     {
-        public string PostId { get; set; }
-        public string CommentId { get; set; }
+        public int PostId { get; set; }
+        public int CommentId { get; set; }
     }
 }

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Techgen.Domain.Entities.Identity;
 using Techgen.Domain.Entities.PostEntities;
+using Techgen.Domain.Entities.RoadmapEntity;
 using Techgen.Models.ResponseModels;
 using Techgen.Models.ResponseModels.Post;
 using Techgen.Models.ResponseModels.Session;
@@ -41,6 +42,26 @@ namespace Techgen.Services
 
             CreateMap<ApplicationUser, UserRoleResponseModel>();
 
+            #endregion
+
+            #region Comment model
+
+            CreateMap<Comment, CommentResponseModel>()
+                .ForMember(x => x.Id, opt => opt.MapFrom(x => x.Id))
+                .ForMember(x => x.Text, opt => opt.MapFrom(x => x.Text))
+                .ForMember(x => x.AnswersToComment, opt => opt.MapFrom(x => x.Answers))
+                .ForMember(x => x.ParentCommentId, opt => opt.MapFrom(x => x.ParentCommentId))
+                .ForMember(x => x.AuthorId, opt => opt.MapFrom(x => x.UserId));
+
+            #endregion
+
+            #region Roadmap model
+
+            CreateMap<Roadmap, RoadmapResponseModel>()
+                .ForMember(x => x.Id, opt => opt.MapFrom(x => x.Id))
+                .ForMember(x => x.Markdown, opt => opt.MapFrom(x => x.Markdown))
+                .ForMember(x => x.Path, opt => opt.MapFrom(x => x.Path))
+                .ForMember(x => x.ImageName, opt => opt.MapFrom(x => x.ImageName));
             #endregion
 
             #region Post model

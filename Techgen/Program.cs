@@ -414,6 +414,27 @@ try
 
         if (app.Environment.IsProduction())
             builder.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+
+        //git link
+
+        if (app.Environment.IsDevelopment())
+            builder.WithOrigins("http://smerch88.github.io/").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+
+        if (app.Environment.IsStaging())
+            builder.WithOrigins("http://smerch88.github.io/").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+
+        if (app.Environment.IsProduction())
+            builder.WithOrigins("http://smerch88.github.io/").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+
+        //localhost3000
+        if (app.Environment.IsDevelopment())
+            builder.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+
+        if (app.Environment.IsStaging())
+            builder.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+
+        if (app.Environment.IsProduction())
+            builder.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
     });
 
     app.UseHttpsRedirection();

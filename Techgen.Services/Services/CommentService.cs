@@ -52,7 +52,9 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<CommentResponseModel>> Create(CommentRequestModel model)
         {
-            var post = _unitOfWork.Repository<Post>().GetById(model.PostId);
+            var post = _unitOfWork.Repository<Post>().Get(x => x.Id == model.PostId)
+                                                    .Include(w => w.Comments)
+                                                    .FirstOrDefault();
 
             if (post == null)
             {
@@ -71,15 +73,17 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<MessageResponseModel>> AdminDelete(AdminDeleteCommentRequestModel model)
         {
-            var post = _unitOfWork.Repository<Post>().GetById(model.PostId);
+            var post = _unitOfWork.Repository<Post>().Get(x => x.Id == model.PostId)
+                                                    .Include(w => w.Comments)
+                                                    .FirstOrDefault();
+            if (post == null)
+                return new BaseResponse<MessageResponseModel>() { StatusCode = System.Net.HttpStatusCode.Forbidden, Description = "Such post does not exist" };
 
-            if (post == null) 
-            { 
-            }
-            var comment = post.Comments.FirstOrDefault(x => x.Id.ToString() == model.CommentId);
+            var comment = post.Comments.FirstOrDefault(x => x.Id == model.CommentId);
+
             if (comment == null)
-            { 
-            }
+                return new BaseResponse<MessageResponseModel>() { StatusCode = System.Net.HttpStatusCode.Forbidden, Description = "Such comment does not exist" };
+
             post.Comments.Remove(comment);
 
             _unitOfWork.Repository<Post>().Update(post);
@@ -90,18 +94,20 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<MessageResponseModel>> UserDelete(int commentId)
         {
-            var user = _unitOfWork.Repository<ApplicationUser>().Get(x => x.Id == _userId.Value).FirstOrDefault();
+            var user = _unitOfWork.Repository<ApplicationUser>().Get(x => x.Id == _userId.Value)
+                                                                .Include(w => w.Comments)
+                                                                .FirstOrDefault();
 
             if (user == null)
-            { 
-            }
+                return new BaseResponse<MessageResponseModel>() { StatusCode = System.Net.HttpStatusCode.Forbidden, Description = "Such user does not exist" };
 
             var comment = user.Comments.FirstOrDefault(x => x.Id == commentId);
 
             if (comment == null)
-            { 
-            }
+                return new BaseResponse<MessageResponseModel>() { StatusCode = System.Net.HttpStatusCode.Forbidden, Description = "Such comment does not exist" };
+
             _unitOfWork.Repository<Comment>().DeleteById(commentId);
+            _unitOfWork.SaveChanges();
             return new BaseResponse<MessageResponseModel>(new MessageResponseModel($"deleted {comment.Id} from {user.Id} user"));
         }
 
@@ -110,31 +116,27 @@ namespace Techgen.Services.Services
             var post = _unitOfWork.Repository<Post>().GetById(postId);
 
             if (post == null)
-            {
                 return new BaseResponse<IEnumerable<CommentResponseModel>>() {StatusCode = System.Net.HttpStatusCode.NotFound, Description = "That post does not exist"};
-            }
+
             var response = _mapper.Map<IEnumerable<CommentResponseModel>>(post.Comments);
             return new BaseResponse<IEnumerable<CommentResponseModel>>() {Data=response, StatusCode = System.Net.HttpStatusCode.OK};
         }
 
         public async Task<IBaseResponse<CommentResponseModel>> CreateAnswer(CommentRequestModel model, int parentCommentId)
         {
-            var comment = _unitOfWork.Repository<Comment>().GetById(parentCommentId);
-            var authorId = comment.UserId;
+            var comment = _unitOfWork.Repository<Comment>().Get(x=> x.Id == parentCommentId)
+                                                           .Include(w => w.User)
+                                                           .Include(w => w.Answers)
+                                                           .FirstOrDefault();
 
             if (comment == null)
-            {
                 return new BaseResponse<CommentResponseModel>() { StatusCode = System.Net.HttpStatusCode.NotFound, Description = "that comment does not exist" };
-            }
+
+            var authorUserName = comment.User.UserName;
 
             var answer = new Comment() { PostId = comment.PostId, UserId = _userId.Value, Text = model.Text, ParentCommentId = parentCommentId};
 
-            while (comment.ParentCommentId != null)
-            {
-                comment = _unitOfWork.Repository<Comment>().Get(x => x.Id == comment.ParentCommentId).Include(w => w.Answers).FirstOrDefault();
-            }
-
-            answer.Text = $"Пользователю {authorId}, " + model.Text;
+            answer.Text = $"Пользователю {authorUserName}, " + model.Text;
             comment.Answers.Add(answer);
 
             _unitOfWork.Repository<Comment>().Update(comment);
