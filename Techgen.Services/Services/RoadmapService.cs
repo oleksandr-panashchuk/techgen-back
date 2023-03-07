@@ -29,6 +29,8 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<RoadmapResponseModel>> Create(IFormFile image, string markdown)
         {
+           
+
             if (image == null && markdown == null)
             {
                 return new BaseResponse<RoadmapResponseModel> { Description = "roadmap is null", StatusCode = System.Net.HttpStatusCode.BadRequest };
@@ -40,7 +42,7 @@ namespace Techgen.Services.Services
             {
                 string path = "/Resources/RoadmapImages/" + image.Name;
 
-                using (var fileStream = new FileStream(_appEnvironment.WebRootPath + path, FileMode.Create))
+                using (var fileStream = new FileStream(_appEnvironment.WebRootPath + path, FileMode.Create)) 
                 {
                     await image.CopyToAsync(fileStream);
                 }

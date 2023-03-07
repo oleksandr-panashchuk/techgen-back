@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Web.Http.Results;
 using Techgen.Common.Constants;
+using Techgen.Models.RequestModels.Post;
 using Techgen.Models.ResponseModels.Base;
 using Techgen.Models.ResponseModels.Post;
 using Techgen.Models.ResponseModels.Session;
@@ -69,6 +71,34 @@ namespace Techgen.Controllers.v1
             return Json(new JsonResponse<IBaseResponse<IEnumerable<SmallPostResponseModel>>>(response));
 
         }
+
+
+        // GET api/v1/post/CreatePost
+        /// <summary>
+        /// Get all posts
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     GET api/v1/post/CreatePost
+        ///
+        /// </remarks>
+        /// <returns>HTTP 201 with PostResponseModel or HTTP 4XX, 500 with error message</returns>
+
+        [SwaggerResponse(201, ResponseMessages.RequestSuccessful, typeof(JsonResponse<IBaseResponse<IEnumerable<SmallPostResponseModel>>>))]
+        [SwaggerResponse(400, ResponseMessages.InvalidCredentials, typeof(ErrorResponseModel))]
+        [SwaggerResponse(404, ResponseMessages.BadRequest, typeof(ErrorResponseModel))]
+        [SwaggerResponse(500, ResponseMessages.InternalServerError, typeof(ErrorResponseModel))]
+        
+        [HttpPost("CreatePost")]
+        public async Task<IActionResult> Create(PostRequestModel model)
+        {
+            var response = await _postService.Create(model);
+
+           // return  Json(new JsonResult<IBaseResponse<PostResponseModel>>(response));
+            return Json(new JsonResponse<IBaseResponse<PostResponseModel>>(response));
+        }
+
 
     }
 }

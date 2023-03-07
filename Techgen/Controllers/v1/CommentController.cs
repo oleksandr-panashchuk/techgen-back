@@ -120,5 +120,7 @@ namespace Techgen.Controllers.v1
             var response = await _commentService.AdminDelete(model);
             return Json(new JsonResponse<IBaseResponse<MessageResponseModel>>(response));
         }
+
+        
     }
 }

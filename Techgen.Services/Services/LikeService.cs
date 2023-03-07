@@ -53,11 +53,31 @@ namespace Techgen.Services.Services
                 return new BaseResponse<PostResponseModel>() { StatusCode = System.Net.HttpStatusCode.NotFound, Description = "cannot find post" };
 
             var like = post.Likes.FirstOrDefault(x => x.UserId == _userId);
+
+
+            //if (like == null)
+            //{
+            //    like = new Like { PostId = postId, UserId = _userId.Value };
+            //    post.Likes.Add(like);
+            //}
+
+
             if (like != null)
+            {
                 await Delete(postId);
+            }
+            else
+            {
+                like = new Like { PostId = postId, UserId = _userId.Value };
+                post.Likes.Add(like);
+            }
+
            
-            like = new Like { PostId = postId, UserId = _userId.Value};
-            post.Likes.Add(like);
+
+
+
+            // like != null ? post.Likes.Add(like) : Delete(postId);
+
 
             _unitOfWork.Repository<Post>().Update(post);
             _unitOfWork.SaveChanges();
@@ -68,7 +88,8 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<PostResponseModel>> Delete(int postId)
         {
-            var post = _unitOfWork.Repository<Post>().GetById(postId);          
+            var post = _unitOfWork.Repository<Post>().GetById(postId);
+ 
             if (post == null)
                 return new BaseResponse<PostResponseModel>() { StatusCode = System.Net.HttpStatusCode.NotFound, Description = "cannot find post" };
 
@@ -76,7 +97,7 @@ namespace Techgen.Services.Services
             if (like == null)
                 return new BaseResponse<PostResponseModel>() { StatusCode = System.Net.HttpStatusCode.NotFound, Description = "cannot find like to this post" };
             
-            post.Likes.Remove(like);              
+                post.Likes.Remove(like);              
 
             _unitOfWork.Repository<Post>().Update(post);
             _unitOfWork.SaveChanges();
