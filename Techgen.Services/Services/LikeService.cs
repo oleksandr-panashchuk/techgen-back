@@ -55,13 +55,6 @@ namespace Techgen.Services.Services
             var like = post.Likes.FirstOrDefault(x => x.UserId == _userId);
 
 
-            //if (like == null)
-            //{
-            //    like = new Like { PostId = postId, UserId = _userId.Value };
-            //    post.Likes.Add(like);
-            //}
-
-
             if (like != null)
             {
                 await Delete(postId);
@@ -71,13 +64,6 @@ namespace Techgen.Services.Services
                 like = new Like { PostId = postId, UserId = _userId.Value };
                 post.Likes.Add(like);
             }
-
-           
-
-
-
-            // like != null ? post.Likes.Add(like) : Delete(postId);
-
 
             _unitOfWork.Repository<Post>().Update(post);
             _unitOfWork.SaveChanges();
