@@ -10,4 +10,14 @@
     <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="7.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Resources\RoadmapImages\image\" />
+    <Folder Include="Resources\Новая папка1\" />
+    <Folder Include="Resources\Новая папка2\" />
+    <Folder Include="Resources\Новая папка3\" />
+    <Folder Include="Resources\Новая папка4\" />
+    <Folder Include="Resources\Новая папка5\" />
+    <Folder Include="Resources\Новая папка\" />
+  </ItemGroup>
+
 </Project>

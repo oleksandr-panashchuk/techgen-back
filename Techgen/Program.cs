@@ -503,7 +503,7 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
 
-    app.UseEndpoints(endpoints =>
+    app.UseEndpoints(endpoints => 
     {
         endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
     });
