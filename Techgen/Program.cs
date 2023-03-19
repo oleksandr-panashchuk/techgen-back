@@ -101,6 +101,7 @@ try
     builder.Services.AddScoped<ICommentService, CommentService>();
     builder.Services.AddScoped<ILikeService, LikeService>();
     builder.Services.AddScoped<IRoadmapService, RoadmapService>();
+    builder.Services.AddScoped<IVacanciesParser, VacanciesParser>();
 
     //impliment auto mapper config
     var config = new AutoMapper.MapperConfiguration(cfg =>
