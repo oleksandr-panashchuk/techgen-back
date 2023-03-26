@@ -14,7 +14,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using MongoDB.Driver;
 using Newtonsoft.Json;
 using NLog;
 using NLog.Layouts;
