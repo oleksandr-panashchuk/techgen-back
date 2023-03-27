@@ -1,7 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using MongoDB.Driver;
-using MongoDbGenericRepository;
 using System;
 using System.Threading.Tasks;
 
