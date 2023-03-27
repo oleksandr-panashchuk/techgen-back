@@ -1,5 +1,4 @@
-﻿using MongoDB.Driver;
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Techgen.Domain;
 

@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using MongoDB.Driver;
 using System.Linq;
 using System.Reflection;
 using Techgen.DAL.Abstract;
