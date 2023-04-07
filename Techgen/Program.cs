@@ -521,9 +521,9 @@ static OpenApiInfo CreateInfoForApiVersion(ApiVersionDescription description)
 {
     var info = new OpenApiInfo()
     {
-        Title = $"ApplicationAuth API {description.ApiVersion}",
+        Title = $"Techgen API {description.ApiVersion}",
         Version = description.ApiVersion.ToString(),
-        Description = "The ApplicationAuth application with Swagger and API versioning."
+        Description = "The Techgen application with Swagger and API versioning."
     };
 
     if (description.IsDeprecated)

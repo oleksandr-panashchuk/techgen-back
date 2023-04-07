@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  techgen:
+    image: ${DOCKER_REGISTRY-}techgen
+    build:
+      context: .
+      dockerfile: Techgen/Dockerfile
