@@ -1,5 +1,11 @@
 ﻿using AngleSharp;
 using AngleSharp.Css.Dom;
+using AngleSharp.Dom;
+using AngleSharp.Dom.Events;
+using AngleSharp.Html.Dom;
+using AngleSharp.Html.Dom.Events;
+using MediaBrowser.Common.Events;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using Techgen.Common.Constants;
@@ -21,9 +27,9 @@ namespace Techgen.Services.Services
 
             var tasks = new List<Task<List<VacancyResponseModel>>>
             {
-                Task.Run(() => WorkUaParseAsync(context, model)),
-                Task.Run(() => DOUParseAsync(context, model)),
-                Task.Run(() => DjinniParseAsync(context, model))
+              // Task.Run(() => WorkUaParseAsync(context, model)),
+               Task.Run(() => DOUParseAsync(context, model)),
+               //Task.Run(() => DjinniParseAsync(context, model))
             };
 
             List<VacancyResponseModel>[] results = await Task.WhenAll(tasks);
@@ -37,45 +43,60 @@ namespace Techgen.Services.Services
 
         private async Task<List<VacancyResponseModel>> WorkUaParseAsync(IBrowsingContext context, VacancyRequestModel model)
         {
-            string url = CreateUrlWorkUa(model);
+            string url = CreateUrlWorkUa(model, JobSiteUrl.WORK_UA_Search);
 
             var document = await context.OpenAsync(url);
-            var vacancies = document.QuerySelectorAll(".job-link");
+
+            int page = GetPaginationForWorkUa(document);
 
             var jobList = new List<VacancyResponseModel>();
 
-            foreach (var vacancy in vacancies)
+            for (int i = 1; i <= page; i++)
             {
-                string title = vacancy.QuerySelector("h2").TextContent.Trim();
-                string companyName = vacancy.QuerySelector(".add-top-xs").QuerySelector("b").TextContent.Trim();
-                string jobLink = JobSiteUrl.WORK_UA + vacancy.QuerySelector("a").GetAttribute("href");
-                string? companyLogoUrl = vacancy.QuerySelector("img")?.GetAttribute("src");
+                
+                string ConstUrl = $"https://www.work.ua/jobs/?page={i}?category=1&search=";
+ 
+                string PageUrl = CreateUrlWorkUa(model, ConstUrl);
 
-                string[] vacancyDescription = vacancy.QuerySelector("p").TextContent.Split(".");
-                string employment = vacancyDescription[0].Trim();
-                string content = vacancyDescription[^1].Trim();
+                var PageDocument = await context.OpenAsync(PageUrl);
 
-                string date = vacancy.QuerySelector(".pull-right").QuerySelector("span").TextContent;
+                var vacancies = PageDocument.QuerySelectorAll(".job-link");
 
-                jobList.Add(
-                    new VacancyResponseModel
-                    {
-                        Title = title,
-                        CompanyName = companyName,
-                        CompanyLogoUrl = companyLogoUrl,
-                        Content = content,
-                        Employment = employment,
-                        JobLink = jobLink,
-                        Date = date
-                    });
+                foreach (var vacancy in vacancies)
+                {
+
+                    string title = vacancy.QuerySelector("h2").TextContent.Trim();
+                    string companyName = vacancy.QuerySelector(".add-top-xs").QuerySelector("b").TextContent.Trim();
+                    string jobLink = JobSiteUrl.WORK_UA + vacancy.QuerySelector("a").GetAttribute("href");
+                    string? companyLogoUrl = vacancy.QuerySelector("img")?.GetAttribute("src");
+
+                    string[] vacancyDescription = vacancy.QuerySelector("p").TextContent.Split(".");
+                    string employment = vacancyDescription[0].Trim();
+                    string content = vacancyDescription[^1].Trim();
+
+                    string date = vacancy.QuerySelector(".pull-right").QuerySelector("span").TextContent;
+
+                    jobList.Add(
+                        new VacancyResponseModel
+                        {
+                            Title = title,
+                            CompanyName = companyName,
+                            CompanyLogoUrl = companyLogoUrl,
+                            Content = content,
+                            Employment = employment,
+                            JobLink = jobLink,
+                            Date = date
+                        });
+                }
             }
-
             return jobList;
         }
-        private string CreateUrlWorkUa(VacancyRequestModel model)
+        private string CreateUrlWorkUa(VacancyRequestModel model, string Turl)
         {
-            StringBuilder url = new StringBuilder(JobSiteUrl.WORK_UA_Search);
+           // var page = GetPaginationForWorkUa()
 
+            StringBuilder url = new StringBuilder(Turl);
+            
             if (model.SearchQuery != null)
             {
                 url.Append(' ' + model.SearchQuery);
@@ -99,11 +120,19 @@ namespace Techgen.Services.Services
             return url.ToString();
         }
 
+        private int GetPaginationForWorkUa(IDocument document)
+        {
+            var block = document.QuerySelector(".pagination").QuerySelectorAll("a");
+            int page = Int32.Parse(block[block.Length - 2].TextContent);
+            return page;      
+        }
+
         private async Task<List<VacancyResponseModel>> DOUParseAsync(IBrowsingContext context, VacancyRequestModel model)
         {
             string url = CreateUrlDOU(model);
 
             var document = await context.OpenAsync(url);
+
             var vacancies = document.QuerySelectorAll(".l-vacancy");
 
             var jobList = new List<VacancyResponseModel>();
@@ -149,57 +178,69 @@ namespace Techgen.Services.Services
 
         private async Task<List<VacancyResponseModel>> DjinniParseAsync(IBrowsingContext context, VacancyRequestModel model)
         {
-            string url = CreateUrlDjinni(model);
+            string url = CreateUrlDjinni(model, JobSiteUrl.DJINNI_Search);
 
             var document = await context.OpenAsync(url);
-            var vacancies = document.QuerySelectorAll(".list-jobs__item");
+
+            int page = PaginationFromDjinni(document);
 
             var jobList = new List<VacancyResponseModel>();
 
-            foreach (var vacancy in vacancies)
+            for (int i = 1; i <= page; i++)
             {
-                string title = vacancy.QuerySelector(".profile").TextContent.Trim();
-                string companyName = vacancy.QuerySelector(".list-jobs__details__info").QuerySelector("a").TextContent.Trim();
-                string jobLink = JobSiteUrl.DJINNI + vacancy.QuerySelector(".profile").GetAttribute("href");
-                string? companyLogoUrl = vacancy.QuerySelector(".userpic-image").GetAttribute("style")
-                    .Replace("background-image: url('", "").Replace("')", "");
+                string ConstUrl = $"https://djinni.co/jobs/?page={i}";
+ 
+                string Pageurl = CreateUrlDjinni(model, ConstUrl);
 
-                string content = vacancy.QuerySelector(".list-jobs__description").QuerySelector(".truncated").TextContent.Trim();
+                var PageDocument = await context.OpenAsync(Pageurl);
 
-                var vacancyDescription = vacancy.QuerySelector(".list-jobs__details__info").QuerySelectorAll("nobr");
+                var vacancies = PageDocument.QuerySelectorAll(".list-jobs__item");
 
-                var empoyment = vacancyDescription.Length >= 4
-                    ? vacancyDescription[1].TextContent.Trim()
-                    : vacancyDescription[0].TextContent.Trim();
+                foreach (var vacancy in vacancies)
+                {
+                    string title = vacancy.QuerySelector(".profile").TextContent.Trim();
+                    string companyName = vacancy.QuerySelector(".list-jobs__details__info").QuerySelector("a").TextContent.Trim();
+                    string jobLink = JobSiteUrl.DJINNI + vacancy.QuerySelector(".profile").GetAttribute("href");
+                    string? companyLogoUrl = vacancy.QuerySelector(".userpic-image").GetAttribute("style")
+                        .Replace("background-image: url('", "").Replace("')", "");
 
-                var experience = vacancyDescription.Length >= 4
-                    ? vacancyDescription[2].TextContent.Trim().Substring(2)
-                    : vacancyDescription[1].TextContent.Trim().Substring(2);
+                    string content = vacancy.QuerySelector(".list-jobs__description").QuerySelector(".truncated").TextContent.Trim();
 
-                string dateBlock = vacancy.QuerySelector(".text-date").TextContent;
-                string pattern = @"^\s*(\d+\s+[а-яА-Я]+\b)";
-                Match match = Regex.Match(dateBlock, pattern);
-                string date = match.Groups[1].Value.Trim();
+                    var vacancyDescription = vacancy.QuerySelector(".list-jobs__details__info").QuerySelectorAll("nobr");
 
-                jobList.Add(
-                    new VacancyResponseModel
-                    {
-                        Title = title,
-                        CompanyName = companyName,
-                        CompanyLogoUrl = companyLogoUrl,
-                        Content = content,
-                        Employment = empoyment,
-                        Experience = experience,                    
-                        JobLink = jobLink,
-                        Date = date
-                    });
+                    var empoyment = vacancyDescription.Length >= 4
+                        ? vacancyDescription[1].TextContent.Trim()
+                        : vacancyDescription[0].TextContent.Trim();
+
+                    var experience = vacancyDescription.Length >= 4
+                        ? vacancyDescription[2].TextContent.Trim().Substring(2)
+                        : vacancyDescription[1].TextContent.Trim().Substring(2);
+
+                    string dateBlock = vacancy.QuerySelector(".text-date").TextContent;
+                    string pattern = @"^\s*(\d+\s+[а-яА-Я]+\b)";
+                    Match match = Regex.Match(dateBlock, pattern);
+                    string date = match.Groups[1].Value.Trim();
+
+                    jobList.Add(
+                        new VacancyResponseModel
+                        {
+                            Title = title,
+                            CompanyName = companyName,
+                            CompanyLogoUrl = companyLogoUrl,
+                            Content = content,
+                            Employment = empoyment,
+                            Experience = experience,
+                            JobLink = jobLink,
+                            Date = date
+                        });
+                }
             }
 
             return jobList;
         }
-        private string CreateUrlDjinni(VacancyRequestModel model)
+        private string CreateUrlDjinni(VacancyRequestModel model,string Turl)
         {
-            StringBuilder url = new StringBuilder(JobSiteUrl.DJINNI_Search);
+            StringBuilder url = new StringBuilder(Turl);
 
             if (model.Direction != null)
             {
@@ -216,5 +257,13 @@ namespace Techgen.Services.Services
 
             return url.ToString();
         }
+
+        private int PaginationFromDjinni(IDocument document)
+        {
+            var block = document.QuerySelector(".pagination").QuerySelectorAll(".page-link");
+            int page = Int32.Parse(block[block.Length - 2].TextContent);
+            return page;
+        }
+
     }
 }
