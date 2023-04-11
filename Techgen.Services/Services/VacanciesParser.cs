@@ -27,9 +27,9 @@ namespace Techgen.Services.Services
 
             var tasks = new List<Task<List<VacancyResponseModel>>>
             {
-              // Task.Run(() => WorkUaParseAsync(context, model)),
+               Task.Run(() => WorkUaParseAsync(context, model)),
                Task.Run(() => DOUParseAsync(context, model)),
-               //Task.Run(() => DjinniParseAsync(context, model))
+               Task.Run(() => DjinniParseAsync(context, model))
             };
 
             List<VacancyResponseModel>[] results = await Task.WhenAll(tasks);
