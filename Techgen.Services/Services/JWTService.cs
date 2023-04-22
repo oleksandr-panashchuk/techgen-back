@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Techgen.Common.Constants;
 using Techgen.Common.Extensions;
 using Techgen.Common.Utilities;
+using Techgen.Common.Utilities.Interfaces;
 using Techgen.DAL.Abstract;
 using Techgen.Domain.Entities.Identity;
 using Techgen.Models.ResponseModels.Session;
@@ -27,15 +28,18 @@ namespace Techgen.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IHashUtility _hashUtility;
         public JWTService(UserManager<ApplicationUser> userManager,
             IUnitOfWork unitOfWork,
             IMapper mapper,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IHashUtility hashUtility)
         {
             _userManager = userManager;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _httpContextAccessor = httpContextAccessor;
+            _hashUtility = hashUtility;
         }
 
         public async Task<ClaimsIdentity> GetIdentity(ApplicationUser user, bool isRefreshToken)
@@ -104,8 +108,8 @@ namespace Techgen.Services.Services
                 AccessExpiresDate = accessLifetime,
                 RefreshExpiresDate = refreshLifetime,
                 IsActive = true,
-                AccessTokenHash = HashUtility.GetHash(accessJwtToken),
-                RefreshTokenHash = HashUtility.GetHash(refreshJwtToken),
+                AccessTokenHash = _hashUtility.GetHash(accessJwtToken),
+                RefreshTokenHash = _hashUtility.GetHash(refreshJwtToken),
             });
 
             #endregion

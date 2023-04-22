@@ -4,23 +4,21 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Techgen.Common.Utilities.Interfaces;
 
 namespace Techgen.Common.Utilities
 {
-    public static class HashUtility
+    public class HashUtility : IHashUtility
     {
-        public static string GetHash(string inputString)
+        public string GetHash(string inputString)
         {
             if (string.IsNullOrEmpty(inputString))
                 return "";
 
-            using (var sha256 = SHA256.Create())
-            {
-                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(inputString));
-                var hash = BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
-
-                return hash;
-            }
+            byte[] data = Encoding.ASCII.GetBytes(inputString);
+            data = new System.Security.Cryptography.SHA256Managed().ComputeHash(data);
+            string hash = Encoding.ASCII.GetString(data);
+            return hash;
         }
     }
 }

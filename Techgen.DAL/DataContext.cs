@@ -23,7 +23,9 @@ namespace Techgen.DAL
 
         public virtual DbSet<UserToken> UserTokens { get; set; }
         public virtual DbSet<VerificationToken> VerificationTokens { get; set; }
+        public virtual DbSet<UserDevice> UserDevices { get; set; }
         public virtual DbSet<ApplicationUserRole> AspNetUserRoles { get; set; }
+        public virtual DbSet<UserChangeRequest> UserChangeRequests { get; set; }
         public virtual DbSet<Profile> Profiles { get; set; }
 
         public virtual DbSet<Post> Posts { get; set; }

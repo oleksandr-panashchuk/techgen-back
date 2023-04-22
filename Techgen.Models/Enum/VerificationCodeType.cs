@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Techgen.Models.Enum
+namespace Techgen.Models.Enums
 {
     public enum VerificationCodeType
     {
@@ -12,7 +6,6 @@ namespace Techgen.Models.Enum
         ResetPassword,
         ConfirmFacebook,
         ConfirmGoogle,
-        ConfirmLinkedIn,
-        Recovery
+        ConfirmLinkedIn
     }
 }

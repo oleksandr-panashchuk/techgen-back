@@ -53,6 +53,12 @@ namespace Techgen.Domain.Entities.Identity
         public ICollection<ApplicationUserRole> UserRoles { get; set; }
 
         [InverseProperty("User")]
+        public virtual ICollection<UserDevice> Devices { get; set; }
+
+        [InverseProperty("User")]
+        public virtual ICollection<UserChangeRequest> UserChangeRequests { get; set; }
+
+        [InverseProperty("User")]
         public virtual ICollection<Comment> Comments { get; set; }
 
         [InverseProperty("User")]
@@ -60,6 +66,8 @@ namespace Techgen.Domain.Entities.Identity
 
         [InverseProperty("User")]
         public virtual ICollection<Like> Likes { get; set; }
+
+
 
         #endregion
 

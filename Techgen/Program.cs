@@ -1,3 +1,4 @@
+using MediaBrowser.Model.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Diagnostics;
@@ -33,6 +34,7 @@ using Techgen.Common.Constants;
 using Techgen.Common.Exceptions;
 using Techgen.Common.Helpers.SwaggerFilters;
 using Techgen.Common.Utilities;
+using Techgen.Common.Utilities.Interfaces;
 using Techgen.DAL;
 using Techgen.DAL.Abstract;
 using Techgen.DAL.Migrations;
@@ -91,17 +93,22 @@ try
     builder.Services.AddScoped<IDataContext>(provider => provider.GetService<DataContext>());
     builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
     builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-    builder.Services.AddScoped<IRepository<UserToken>,Repository<UserToken>>();
-    builder.Services.AddTransient<IAccountService, AccountService>();
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+    builder.Services.AddSingleton<IHashUtility, HashUtility>();
+
+    builder.Services.AddTransient<IAccountService, AccountService>();
     builder.Services.AddScoped<IJWTService, JWTService>();
     builder.Services.AddScoped<IEmailSender, EmailSender>();
     builder.Services.AddScoped<IProfileService, ProfileService>();
+    builder.Services.AddScoped<IUserService, UserService>();
+
     builder.Services.AddScoped<IPostService, PostService>();
     builder.Services.AddScoped<ICommentService, CommentService>();
     builder.Services.AddScoped<ILikeService, LikeService>();
+
     builder.Services.AddScoped<IRoadmapService, RoadmapService>();
     builder.Services.AddScoped<IVacanciesParser, VacanciesParser>();
+
 
     //impliment auto mapper config
     var config = new AutoMapper.MapperConfiguration(cfg =>
@@ -109,6 +116,8 @@ try
         cfg.AddProfile(new AutoMapperProfileConfiguration());
     });
     builder.Services.AddSingleton(config.CreateMapper());
+
+    builder.Services.AddDetection();
 
     builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
@@ -231,7 +240,7 @@ try
                     {
                         using (var scope = serviceScopeFactory.CreateScope())
                         {
-                            var hash = HashUtility.GetHash(jwt.RawData);
+                            var hash = scope.ServiceProvider.GetService<IHashUtility>().GetHash(jwt.RawData);
                             return scope.ServiceProvider.GetService<IRepository<UserToken>>().Find(t => t.AccessTokenHash == hash && t.IsActive) != null;
                         }
 
@@ -337,8 +346,14 @@ try
 
         try
         {
-            var context = app.Services.GetRequiredService<DataContext>();
-            DbInitializer.Initialize(context, configuration, app.Services);
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+
+                var context = services.GetRequiredService<DataContext>();
+                
+                DbInitializer.Initialize(context, configuration, services);
+            }
         }
         catch (Exception ex)
         {
@@ -357,7 +372,7 @@ try
         NLog.LogManager.Shutdown();
     }
 
-    if (!app.Environment.IsProduction())
+    if (/*!app.Environment.IsProduction()*/ true)
     {
         app.UseSwagger(options =>
         {
@@ -440,7 +455,7 @@ try
 
     app.UseHttpsRedirection();
     app.UseStaticFiles();
-
+    app.UseDetection();
     app.UseRouting();
 
     #region Error handler
@@ -508,6 +523,16 @@ try
     {
         endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
     });
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+
+        var context = services.GetRequiredService<DataContext>();
+        if (context.Database.GetPendingMigrations().Any())
+        {
+            context.Database.Migrate();
+        }
+    }
 
     app.Run();
 

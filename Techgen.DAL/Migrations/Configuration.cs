@@ -42,8 +42,8 @@ namespace Techgen.DAL.Migrations
             {
                 new ApplicationUser
                 {
-                    UserName = "admin@moderator.com",
-                    Email = "admin@moderator.com",
+                    UserName = "admin@superadmin.com",
+                    Email = "admin@superadmin.com",
                     EmailConfirmed = true,
                     PhoneNumberConfirmed = true,
                     IsActive = true,
@@ -52,8 +52,8 @@ namespace Techgen.DAL.Migrations
                 },
                 new ApplicationUser
                 {
-                    UserName = "dev@moderator.com",
-                    Email = "dev@moderator.com",
+                    UserName = "dev@superadmin.com",
+                    Email = "dev@superadmin.com",
                     EmailConfirmed = true,
                     PhoneNumberConfirmed = true,
                     IsActive = true,
@@ -72,8 +72,8 @@ namespace Techgen.DAL.Migrations
                 },
                 new ApplicationUser
                 {
-                    UserName = "qa@moderator.com",
-                    Email = "qa@moderator.com",
+                    UserName = "qa@superadmin.com",
+                    Email = "qa@superadmin.com",
                     EmailConfirmed = true,
                     PhoneNumberConfirmed = true,
                     IsActive = true,
@@ -82,8 +82,8 @@ namespace Techgen.DAL.Migrations
                 },
                 new ApplicationUser
                 {
-                    UserName = "qa2@moderator.com",
-                    Email = "qa2@moderator.com",
+                    UserName = "qa2@superadmin.com",
+                    Email = "qa2@superadmin.com",
                     EmailConfirmed = true,
                     PhoneNumberConfirmed = true,
                     IsActive = true,
@@ -151,7 +151,7 @@ namespace Techgen.DAL.Migrations
             foreach (var user in moderators)
             {
                 if (!context.Users.Any(u => u.UserName == user.UserName))
-                    SeedAdmin(user, password, Role.Moderator);
+                    SeedAdmin(user, password, Role.SuperAdmin);
             }
 
             foreach (var user in admins)

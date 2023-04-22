@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Techgen.Common.Extensions;
 using Techgen.Common.Utilities;
+using Techgen.Common.Utilities.Interfaces;
 using Techgen.DAL.Abstract;
 using Techgen.Domain.Entities.Identity;
 using Techgen.Models.Enum;
@@ -27,6 +28,7 @@ namespace Techgen.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IJWTService _jwtService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IHashUtility _hashUtility;
         
         private bool _isUserModerator = false;
         private bool _isUserAdmin = false;
@@ -37,18 +39,20 @@ namespace Techgen.Services.Services
             IJWTService jwtService,
             IHttpContextAccessor httpContextAccessor,
             IServiceProvider serviceProvider,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IHashUtility hash)
         {
             _userManager = userManager;
             _unitOfWork = unitOfWork;
             _jwtService = jwtService;
             _httpContextAccessor = httpContextAccessor;
+            _hashUtility = hash;
 
             var context = httpContextAccessor.HttpContext;
 
             if (context?.User != null)
             {
-                _isUserModerator = context.User.IsInRole(Role.Moderator);
+                _isUserModerator = context.User.IsInRole(Role.SuperAdmin);
                 _isUserAdmin = context.User.IsInRole(Role.Admin);
 
                 try
@@ -212,7 +216,7 @@ namespace Techgen.Services.Services
                                                                     .ThenInclude(w => w.Role)
                                                                 .FirstOrDefault();
 
-            if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password) || !user.UserRoles.Any(x => x.Role.Name == Role.Admin.ToString() || x.Role.Name == Role.Moderator.ToString()))
+            if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password) || !user.UserRoles.Any(x => x.Role.Name == Role.Admin.ToString() || x.Role.Name == Role.SuperAdmin.ToString()))
             {
                 return new BaseResponse<LoginResponseModel>
                 {
@@ -227,7 +231,7 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<TokenResponseModel>> RefreshTokenAsync(string refreshToken, List<string> roles)
         {
-            var token = _unitOfWork.Repository<UserToken>().Find(w => w.RefreshTokenHash == HashUtility.GetHash(refreshToken) && w.IsActive && w.RefreshExpiresDate > DateTime.UtcNow);
+            var token = _unitOfWork.Repository<UserToken>().Find(w => w.RefreshTokenHash == _hashUtility.GetHash(refreshToken) && w.IsActive && w.RefreshExpiresDate > DateTime.UtcNow);
             if (token == null)
             {
                 return new BaseResponse<TokenResponseModel>

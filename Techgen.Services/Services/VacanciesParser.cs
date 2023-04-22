@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using Techgen.Common.Constants;
+using Techgen.Common.Exceptions;
 using Techgen.Models.RequestModels;
 using Techgen.Models.ResponseModels;
 using Techgen.Models.ResponseModels.Base;
@@ -28,7 +29,7 @@ namespace Techgen.Services.Services
             var tasks = new List<Task<List<VacancyResponseModel>>>
             {
                Task.Run(() => WorkUaParseAsync(context, model)),
-               Task.Run(() => DOUParseAsync(context, model)),
+               //Task.Run(() => DOUParseAsync(context, model)),
                Task.Run(() => DjinniParseAsync(context, model))
             };
 
@@ -122,9 +123,16 @@ namespace Techgen.Services.Services
 
         private int GetPaginationForWorkUa(IDocument document)
         {
-            var block = document.QuerySelector(".pagination").QuerySelectorAll("a");
-            int page = Int32.Parse(block[block.Length - 2].TextContent);
-            return page;      
+            try
+            {
+                var block = document.QuerySelector(".pagination").QuerySelectorAll(".page-link");
+                int page = block != null ? Int32.Parse(block[block.Length - 2].TextContent) : 1;
+                return page;
+            }
+            catch (Exception)
+            {
+                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Job is not found", "Such job is not found");
+            }
         }
 
         private async Task<List<VacancyResponseModel>> DOUParseAsync(IBrowsingContext context, VacancyRequestModel model)
@@ -260,9 +268,17 @@ namespace Techgen.Services.Services
 
         private int PaginationFromDjinni(IDocument document)
         {
-            var block = document.QuerySelector(".pagination").QuerySelectorAll(".page-link");
-            int page = Int32.Parse(block[block.Length - 2].TextContent);
-            return page;
+            try
+            {
+                var block = document.QuerySelector(".pagination").QuerySelectorAll(".page-link");
+                int page = block!=null?Int32.Parse(block[block.Length - 2].TextContent): 1;
+                return page;
+            }
+            catch (Exception)
+            {
+                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Job is not found", "Such job is not found");
+            }
+            
         }
 
     }

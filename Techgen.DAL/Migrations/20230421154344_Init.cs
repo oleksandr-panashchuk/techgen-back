@@ -225,6 +225,50 @@ namespace Techgen.DAL.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserChangeRequests",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
+                    TokenHash = table.Column<string>(type: "TEXT", nullable: false),
+                    ChangeRequestType = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserChangeRequests", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserChangeRequests_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserDevices",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
+                    IsVerified = table.Column<bool>(type: "INTEGER", nullable: false),
+                    DeviceToken = table.Column<string>(type: "TEXT", nullable: false),
+                    AddedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserDevices", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserDevices_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserTokens",
                 columns: table => new
                 {
@@ -404,6 +448,16 @@ namespace Techgen.DAL.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_UserChangeRequests_UserId",
+                table: "UserChangeRequests",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserDevices_UserId",
+                table: "UserDevices",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserTokens_UserId",
                 table: "UserTokens",
                 column: "UserId");
@@ -443,6 +497,12 @@ namespace Techgen.DAL.Migrations
 
             migrationBuilder.DropTable(
                 name: "Roadmaps");
+
+            migrationBuilder.DropTable(
+                name: "UserChangeRequests");
+
+            migrationBuilder.DropTable(
+                name: "UserDevices");
 
             migrationBuilder.DropTable(
                 name: "UserTokens");

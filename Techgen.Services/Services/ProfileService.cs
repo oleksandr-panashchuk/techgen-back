@@ -39,7 +39,7 @@ namespace Techgen.Services.Services
 
             if (context?.User != null)
             {
-                _isUserModerator = context.User.IsInRole(Role.Moderator.ToString());
+                _isUserModerator = context.User.IsInRole(Role.SuperAdmin.ToString());
                 _isUserAdmin = context.User.IsInRole(Role.Admin.ToString());
 
                 try

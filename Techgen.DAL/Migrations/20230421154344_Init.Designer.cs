@@ -11,7 +11,7 @@ using Techgen.DAL;
 namespace Techgen.DAL.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20230223201629_Init")]
+    [Migration("20230421154344_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -256,6 +256,58 @@ namespace Techgen.DAL.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Profiles");
+                });
+
+            modelBuilder.Entity("Techgen.Domain.Entities.Identity.UserChangeRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChangeRequestType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserChangeRequests");
+                });
+
+            modelBuilder.Entity("Techgen.Domain.Entities.Identity.UserDevice", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeviceToken")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserDevices");
                 });
 
             modelBuilder.Entity("Techgen.Domain.Entities.Identity.UserToken", b =>
@@ -514,6 +566,28 @@ namespace Techgen.DAL.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Techgen.Domain.Entities.Identity.UserChangeRequest", b =>
+                {
+                    b.HasOne("Techgen.Domain.Entities.Identity.ApplicationUser", "User")
+                        .WithMany("UserChangeRequests")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Techgen.Domain.Entities.Identity.UserDevice", b =>
+                {
+                    b.HasOne("Techgen.Domain.Entities.Identity.ApplicationUser", "User")
+                        .WithMany("Devices")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Techgen.Domain.Entities.Identity.UserToken", b =>
                 {
                     b.HasOne("Techgen.Domain.Entities.Identity.ApplicationUser", "User")
@@ -598,6 +672,8 @@ namespace Techgen.DAL.Migrations
                 {
                     b.Navigation("Comments");
 
+                    b.Navigation("Devices");
+
                     b.Navigation("Likes");
 
                     b.Navigation("Posts");
@@ -606,6 +682,8 @@ namespace Techgen.DAL.Migrations
                         .IsRequired();
 
                     b.Navigation("Tokens");
+
+                    b.Navigation("UserChangeRequests");
 
                     b.Navigation("UserRoles");
 
