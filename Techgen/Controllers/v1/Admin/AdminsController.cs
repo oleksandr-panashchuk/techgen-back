@@ -18,7 +18,7 @@ namespace Techgen.Controllers.v1.Admin
     [ApiVersion("1.0")]
     [Produces("application/json")]
     [Route("api/v{api-version:apiVersion}/superadmin/[controller]")]
-    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = Role.Admin)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = Role.Admin)]
     public class AdminsController : _BaseApiController
     {
         private readonly IUserService _userService;

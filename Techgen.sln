@@ -17,7 +17,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Techgen.Services", "Techgen
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Techgen.ResourceLibrary", "Techgen.ResourceLibrary\Techgen.ResourceLibrary.csproj", "{C0519976-DEA5-43F7-B21C-F96D93917E21}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techgen.EmailService", "Techgen.EmailService\Techgen.EmailService.csproj", "{2EAE8106-CFAF-45FB-A567-23B2044F1825}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Techgen.EmailService", "Techgen.EmailService\Techgen.EmailService.csproj", "{2EAE8106-CFAF-45FB-A567-23B2044F1825}"
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{8FAA544F-AE63-483E-ADC6-33E5755E00AF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +59,10 @@ Global
 		{2EAE8106-CFAF-45FB-A567-23B2044F1825}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2EAE8106-CFAF-45FB-A567-23B2044F1825}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2EAE8106-CFAF-45FB-A567-23B2044F1825}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8FAA544F-AE63-483E-ADC6-33E5755E00AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8FAA544F-AE63-483E-ADC6-33E5755E00AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8FAA544F-AE63-483E-ADC6-33E5755E00AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8FAA544F-AE63-483E-ADC6-33E5755E00AF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

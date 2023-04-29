@@ -64,8 +64,8 @@ namespace Techgen.Services.Services
 
         public PaginationResponseModel<UserTableRowResponseModel> GetAll(PaginationRequestModel<UserTableColumn> model, bool getAdmins = false)
         {
-            //if (!_isUserSuperAdmin && !_isUserAdmin)
-              //  throw new CustomException(HttpStatusCode.Forbidden, "role", "You don't have permissions");
+            if (!_isUserSuperAdmin && !_isUserAdmin)
+               throw new CustomException(HttpStatusCode.Forbidden, "role", "You don't have permissions");
 
             List<UserTableRowResponseModel> response = new List<UserTableRowResponseModel>();
 

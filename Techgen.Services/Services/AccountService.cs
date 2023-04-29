@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using Techgen.Common.Exceptions;
 using Techgen.Common.Extensions;
 using Techgen.Common.Utilities;
 using Techgen.Common.Utilities.Interfaces;
@@ -30,7 +31,7 @@ namespace Techgen.Services.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IHashUtility _hashUtility;
         
-        private bool _isUserModerator = false;
+        private bool _isUserSuperAdmin = false;
         private bool _isUserAdmin = false;
         private int? _userId = null;
 
@@ -52,7 +53,7 @@ namespace Techgen.Services.Services
 
             if (context?.User != null)
             {
-                _isUserModerator = context.User.IsInRole(Role.SuperAdmin);
+                _isUserSuperAdmin = context.User.IsInRole(Role.SuperAdmin);
                 _isUserAdmin = context.User.IsInRole(Role.Admin);
 
                 try
@@ -231,21 +232,16 @@ namespace Techgen.Services.Services
 
         public async Task<IBaseResponse<TokenResponseModel>> RefreshTokenAsync(string refreshToken, List<string> roles)
         {
-            var token = _unitOfWork.Repository<UserToken>().Find(w => w.RefreshTokenHash == _hashUtility.GetHash(refreshToken) && w.IsActive && w.RefreshExpiresDate > DateTime.UtcNow);
+            var token = _unitOfWork.Repository<UserToken>().Get(w => w.RefreshTokenHash == _hashUtility.GetHash(refreshToken) && w.IsActive && w.RefreshExpiresDate > DateTime.UtcNow)
+                                                           .Include(w => w.User)
+                                                                .ThenInclude(w => w.UserRoles)
+                                                                    .ThenInclude(w => w.Role)
+                                                                    .FirstOrDefault();
             if (token == null)
-            {
-                return new BaseResponse<TokenResponseModel>
-                {
-                    Description = "Invalid creaditals"
-                };
-            }
+                throw new CustomException(HttpStatusCode.BadRequest, "Invalid creditals", "invalid refreshtoken");
             if (!token.User.UserRoles.Any(x => roles.Contains(x.Role.Name)))
-            {
-                return new BaseResponse<TokenResponseModel>
-                {
-                    Description = "Access denied"
-                };
-            }
+                throw new CustomException(HttpStatusCode.Forbidden, "access denied", "you are not allowed to refresh token as admin");
+
             var result = await _jwtService.CreateUserTokenAsync(token.User, isRefresh: true);
 
             return new BaseResponse<TokenResponseModel> { Data = result, StatusCode = HttpStatusCode.Accepted };
@@ -257,6 +253,8 @@ namespace Techgen.Services.Services
                                                                 .Include(w => w.Tokens)
                                                                 .FirstOrDefault();
 
+            if(!_isUserAdmin && !_isUserSuperAdmin)
+                throw new CustomException(HttpStatusCode.Forbidden, "access denied", "you are not allowed to logout as admin");
             if (user == null)
             {
                 throw new Exception("User not found");

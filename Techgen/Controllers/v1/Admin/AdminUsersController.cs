@@ -25,7 +25,7 @@ namespace Techgen.Controllers.v1.Admin
     [ApiVersion("1.0")]
     [Produces("application/json")]
     [Route("api/v{api-version:apiVersion}/admin-users")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = Role.Admins)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = Role.Admin)]
     [Validate]
     public class AdminUsersController : _BaseApiController
     {

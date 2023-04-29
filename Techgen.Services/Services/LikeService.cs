@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Techgen.Common.Exceptions;
 using Techgen.Common.Extensions;
 using Techgen.DAL.Abstract;
 using Techgen.Domain.Entities.PostEntities;
@@ -50,7 +51,7 @@ namespace Techgen.Services.Services
             var post = _unitOfWork.Repository<Post>().Get(x=>x.Id == postId).Include(w => w.Likes).FirstOrDefault();      
             
             if (post == null)
-                return new BaseResponse<PostResponseModel>() { StatusCode = System.Net.HttpStatusCode.NotFound, Description = "cannot find post" };
+                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Post not found", "Such post does not exist");
 
             var like = post.Likes.FirstOrDefault(x => x.UserId == _userId);
 
@@ -77,11 +78,11 @@ namespace Techgen.Services.Services
             var post = _unitOfWork.Repository<Post>().GetById(postId);
  
             if (post == null)
-                return new BaseResponse<PostResponseModel>() { StatusCode = System.Net.HttpStatusCode.NotFound, Description = "cannot find post" };
+                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Post not found", "Such post does not exist");
 
             var like = post.Likes.FirstOrDefault(x => x.UserId == _userId);
             if (like == null)
-                return new BaseResponse<PostResponseModel>() { StatusCode = System.Net.HttpStatusCode.NotFound, Description = "cannot find like to this post" };
+                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Like not found", "you didnt like that post");
             
                 post.Likes.Remove(like);              
 

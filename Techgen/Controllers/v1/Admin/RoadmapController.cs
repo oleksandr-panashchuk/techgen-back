@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Swashbuckle.AspNetCore.Annotations;
 using Techgen.Common.Constants;
 using Techgen.Common.Helpers.SwaggerFilters;
+using Techgen.Models.Enum;
 using Techgen.Models.RequestModels;
 using Techgen.Models.ResponseModels;
 using Techgen.Models.ResponseModels.Base;
@@ -16,6 +19,7 @@ namespace Techgen.Controllers.v1.Admin
     [ApiVersion("1.0")]
     [Produces("application/json")]
     [Route("api/v{api-version:apiVersion}/[controller]")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = Role.Admin)]
     public class RoadmapController : _BaseApiController
     {
         private readonly IRoadmapService _roadmapService;

@@ -23,6 +23,7 @@ namespace Techgen.Controllers.v1
     [ApiVersion("1.0")]
     [Produces("application/json")]
     [Route("api/v{api-version:apiVersion}/[controller]")]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public class AccountController : _BaseApiController
     {
         private readonly IAccountService _accountService;

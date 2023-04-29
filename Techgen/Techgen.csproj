@@ -8,6 +8,7 @@
     <DocumentationFile>bin\Debug\net5.0\Techgen.xml</DocumentationFile>
     <UserSecretsId>32ac3cdd-7ced-4860-8a02-d36e4b8ea363</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
 
   <ItemGroup>

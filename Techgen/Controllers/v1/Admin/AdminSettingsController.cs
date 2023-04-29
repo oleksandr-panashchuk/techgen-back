@@ -14,7 +14,7 @@ namespace Techgen.Controllers.v1.Admin
     [ApiVersion("1.0")]
     [Produces("application/json")]
     [Route("api/v{api-version:apiVersion}/admin-settings")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = Role.Admins)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = Role.Admin)]
     public class AdminSettingsController : _BaseApiController
     {
         private readonly IAccountService _accountService;

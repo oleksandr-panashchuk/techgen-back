@@ -55,7 +55,7 @@ namespace Techgen.Controllers.v1
 
         // POST api/v1/comment/{id}
         /// <summary>
-        /// Create answer for a comment
+        /// Create an answer for a comment
         /// </summary>
         /// <remarks>
         /// Sample request:

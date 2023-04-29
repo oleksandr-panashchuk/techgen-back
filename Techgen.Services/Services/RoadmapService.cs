@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
+using Techgen.Common.Exceptions;
 using Techgen.Common.Extensions;
 using Techgen.Common.Markdown.MarkdownParser;
 using Techgen.DAL.Abstract;
@@ -33,7 +34,7 @@ namespace Techgen.Services.Services
 
             if (image == null && markdown == null)
             {
-                return new BaseResponse<RoadmapResponseModel> { Description = "roadmap is null", StatusCode = System.Net.HttpStatusCode.BadRequest };
+                throw new CustomException(System.Net.HttpStatusCode.BadRequest, "Roadmap is null", "Image or markdown is invalid");
             }
 
             var roadmap = new Roadmap();
@@ -72,7 +73,7 @@ namespace Techgen.Services.Services
             var roadmap = _unitOfWork.Repository<Roadmap>().GetById(id);
             if(roadmap == null)
             {
-                return new BaseResponse<RoadmapResponseModel> { Description = "that roadmap does not exist", StatusCode = System.Net.HttpStatusCode.NotFound };
+                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Roadmap not found", "Such roadmap does not exist");
             }
 
             var response = _mapper.Map<RoadmapResponseModel>(roadmap);
@@ -84,9 +85,9 @@ namespace Techgen.Services.Services
             var roadmap = _unitOfWork.Repository<Roadmap>().GetById(id);
             if (roadmap == null)
             {
-                return new BaseResponse<RoadmapResponseModel>() { Description = "that roadmap does not exist", StatusCode = System.Net.HttpStatusCode.NotFound };
+                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Roadmap not found", "Such roadmap does not exist");
             }
-              
+
             _unitOfWork.Repository<Roadmap>().DeleteById(id);
             _unitOfWork.SaveChanges();
             return new BaseResponse<RoadmapResponseModel>() { Description = $"{id} was deleted", StatusCode = System.Net.HttpStatusCode.OK };
@@ -96,16 +97,16 @@ namespace Techgen.Services.Services
         {
             if (model.Image == null && model.Markdown == null)
             {
-                return new BaseResponse<RoadmapResponseModel> { Description = "roadmap is null", StatusCode = System.Net.HttpStatusCode.BadRequest };
+                throw new CustomException(System.Net.HttpStatusCode.BadRequest, "Roadmap is null", "Image or markdown is invalid");
             }
 
             var roadmap = _unitOfWork.Repository<Roadmap>().GetById(id);
             if (roadmap == null)
             {
-                return new BaseResponse<RoadmapResponseModel>() { Description = "that roadmap does not exist", StatusCode = System.Net.HttpStatusCode.NotFound };
+                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Roadmap not found", "Such roadmap does not exist");
             }
 
-            if(model.Image != null)
+            if (model.Image != null)
             {          
                 string path = "/Resources/RoadmapImages/" + model.Image.Name;
 

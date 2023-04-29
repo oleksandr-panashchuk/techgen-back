@@ -77,7 +77,7 @@ namespace Techgen.Controllers.v1.Admin
         [SwaggerResponse(403, ResponseMessages.Forbidden, typeof(ErrorResponseModel))]
         [SwaggerResponse(404, ResponseMessages.NotFound, typeof(ErrorResponseModel))]
         [SwaggerResponse(500, ResponseMessages.InternalServerError, typeof(ErrorResponseModel))]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = Role.Admins)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = Role.Admin)]
         [SwaggerOperation(Tags = new[] { "Admin Sessions" })]
         [HttpDelete]
         public async Task<IActionResult> Logout()

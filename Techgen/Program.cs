@@ -26,6 +26,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Configuration;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -54,8 +55,9 @@ var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings().GetCurre
 try
 {
     var builder = WebApplication.CreateBuilder(args);
-
-    
+    //builder.WebHost.UseKestrel(options => {
+    //    options.Listen(IPAddress.Any, 5000);
+    //});
 
     IConfiguration configuration = builder.Configuration;
 
@@ -523,7 +525,7 @@ try
     {
         endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
     });
-    using (var scope = app.Services.CreateScope())
+    /*using (var scope = app.Services.CreateScope())
     {
         var services = scope.ServiceProvider;
 
@@ -532,7 +534,7 @@ try
         {
             context.Database.Migrate();
         }
-    }
+    }*/
 
     app.Run();
 

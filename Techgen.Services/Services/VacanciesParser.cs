@@ -5,6 +5,7 @@ using AngleSharp.Dom.Events;
 using AngleSharp.Html.Dom;
 using AngleSharp.Html.Dom.Events;
 using MediaBrowser.Common.Events;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -123,16 +124,20 @@ namespace Techgen.Services.Services
 
         private int GetPaginationForWorkUa(IDocument document)
         {
-            try
+            var paginationBlock = document.QuerySelector(".pagination");
+            if (paginationBlock == null)
             {
-                var block = document.QuerySelector(".pagination").QuerySelectorAll(".page-link");
-                int page = block != null ? Int32.Parse(block[block.Length - 2].TextContent) : 1;
-                return page;
+                throw new CustomException(HttpStatusCode.NotFound, "Job is not found", "Such job is not found");
             }
-            catch (Exception)
+
+            var pageLinks = paginationBlock.QuerySelectorAll(".page-link");
+            if (pageLinks == null || pageLinks.Length == 0)
             {
-                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Job is not found", "Such job is not found");
+                return 1;
             }
+
+            int totalPages = Int32.Parse(pageLinks[pageLinks.Length - 2].TextContent);
+            return totalPages;
         }
 
         private async Task<List<VacancyResponseModel>> DOUParseAsync(IBrowsingContext context, VacancyRequestModel model)
@@ -268,17 +273,21 @@ namespace Techgen.Services.Services
 
         private int PaginationFromDjinni(IDocument document)
         {
-            try
+            var paginationBlock = document.QuerySelector(".pagination");
+            if (paginationBlock == null)
             {
-                var block = document.QuerySelector(".pagination").QuerySelectorAll(".page-link");
-                int page = block!=null?Int32.Parse(block[block.Length - 2].TextContent): 1;
-                return page;
+                throw new CustomException(HttpStatusCode.NotFound, "Job is not found", "Such job is not found");
             }
-            catch (Exception)
+
+            var pageLinks = paginationBlock.QuerySelectorAll(".page-link");
+            if (pageLinks == null || pageLinks.Length == 0)
             {
-                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Job is not found", "Such job is not found");
+                return 1;
             }
-            
+
+            int totalPages = Int32.Parse(pageLinks[pageLinks.Length - 2].TextContent);
+            return totalPages;
+
         }
 
     }

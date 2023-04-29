@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Techgen.Common.Exceptions;
 using Techgen.Common.Extensions;
 using Techgen.DAL.Abstract;
 using Techgen.Domain.Entities.PostEntities;
@@ -50,7 +51,7 @@ namespace Techgen.Services.Services
         {
             var post = _unitOfWork.Repository<Post>().GetById(id);
             if (post == null)
-                return new BaseResponse<MessageResponseModel>() { Data = new MessageResponseModel($"post does not exist"), StatusCode = System.Net.HttpStatusCode.NotFound };
+                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Post not found", "Such post does not exist");
 
             _unitOfWork.Repository<Post>().DeleteById(id);
             return new BaseResponse<MessageResponseModel>() { Data = new MessageResponseModel($"{id} was deleted"), StatusCode = System.Net.HttpStatusCode.OK};
@@ -61,7 +62,7 @@ namespace Techgen.Services.Services
             var post = _unitOfWork.Repository<Post>().GetById(id);
 
             if (post == null)
-                return new BaseResponse<PostResponseModel>() {StatusCode = System.Net.HttpStatusCode.NotFound, Description="that post does not exist" };
+                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Post not found", "Such post does not exist");
 
             post.Title = model.Name;
             post.Text = model.Text;
@@ -87,7 +88,7 @@ namespace Techgen.Services.Services
                                                      .FirstOrDefault();
 
             if (post == null)
-                return new BaseResponse<PostResponseModel>() {StatusCode = System.Net.HttpStatusCode.NotFound, Description="post does not exist"};
+                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Post not found", "Such post does not exist");
 
             var response = _mapper.Map<PostResponseModel>(post);
             response.LikesCount = post.Likes.Count();
@@ -100,7 +101,7 @@ namespace Techgen.Services.Services
             var post = _unitOfWork.Repository<Post>().Get(x => x.Title == model.Name).FirstOrDefault(); 
 
             if (post != null)
-                return new BaseResponse<PostResponseModel>() { StatusCode = System.Net.HttpStatusCode.Forbidden, Description="post with such title already exist"};
+                throw new CustomException(System.Net.HttpStatusCode.Forbidden, "Title is taken", "Such post-title already exist");
 
             post = new Post()
             {

@@ -59,10 +59,7 @@ namespace Techgen.Services.Services
 
             if (user == null)
             {
-                return new BaseResponse<UserResponseModel>
-                {
-                    Description = "User not found"
-                };
+                throw new Exception("User not found");
             }
 
             //user.Profile.Age = model.Age;
@@ -84,11 +81,7 @@ namespace Techgen.Services.Services
                         
             if (user != null)
             {
-                return new BaseResponse<UserResponseModel>
-                {
-                    Description = "Profile already exists",
-                    StatusCode = HttpStatusCode.OK
-                };
+                throw new Exception("Profile already exists");
             }
 
             user.Profile = new Domain.Entities.Identity.Profile();
@@ -110,11 +103,7 @@ namespace Techgen.Services.Services
                                                                    .FirstOrDefault();
             if (user == null)
             {
-                return new BaseResponse<UserResponseModel>()
-                {
-                    StatusCode = HttpStatusCode.Forbidden,
-                    Description = $"User {_userId.Value} not found"
-                };
+                throw new Exception($"User {_userId.Value} not found");
             }
             var response = _mapper.Map<UserResponseModel>(user.Profile);
 

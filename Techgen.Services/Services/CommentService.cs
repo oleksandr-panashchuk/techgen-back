@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Techgen.Common.Exceptions;
 using Techgen.Common.Extensions;
 using Techgen.DAL.Abstract;
 using Techgen.Domain.Entities.Identity;
@@ -16,6 +17,7 @@ using Techgen.Models.ResponseModels;
 using Techgen.Models.ResponseModels.Base;
 using Techgen.Models.ResponseModels.Post;
 using Techgen.Services.Interfaces;
+using static MongoDB.Libmongocrypt.CryptContext;
 
 namespace Techgen.Services.Services
 {
@@ -58,7 +60,7 @@ namespace Techgen.Services.Services
 
             if (post == null)
             {
-                return new BaseResponse<CommentResponseModel>() {StatusCode = System.Net.HttpStatusCode.NotFound, Description="That post, you tried send commment, does not exist"};
+                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Post not found" ,"That post, you tried send commment, does not exist");
             }
             var comment = new Comment() { PostId = post.Id, Text = model.Text, UserId = _userId.Value };
 
@@ -77,12 +79,12 @@ namespace Techgen.Services.Services
                                                     .Include(w => w.Comments)
                                                     .FirstOrDefault();
             if (post == null)
-                return new BaseResponse<MessageResponseModel>() { StatusCode = System.Net.HttpStatusCode.Forbidden, Description = "Such post does not exist" };
+                throw new CustomException(System.Net.HttpStatusCode.Forbidden, "Post not found", "Such post does not exist");
 
             var comment = post.Comments.FirstOrDefault(x => x.Id == model.CommentId);
 
             if (comment == null)
-                return new BaseResponse<MessageResponseModel>() { StatusCode = System.Net.HttpStatusCode.Forbidden, Description = "Such comment does not exist" };
+                throw new CustomException(System.Net.HttpStatusCode.Forbidden, "Comment not found" ,"Such comment does not exist" );
 
             post.Comments.Remove(comment);
 
@@ -99,12 +101,12 @@ namespace Techgen.Services.Services
                                                                 .FirstOrDefault();
 
             if (user == null)
-                return new BaseResponse<MessageResponseModel>() { StatusCode = System.Net.HttpStatusCode.Forbidden, Description = "Such user does not exist" };
+                throw new CustomException(System.Net.HttpStatusCode.Forbidden, "User not found" ,"Such user-session does not exist" );
 
             var comment = user.Comments.FirstOrDefault(x => x.Id == commentId);
 
             if (comment == null)
-                return new BaseResponse<MessageResponseModel>() { StatusCode = System.Net.HttpStatusCode.Forbidden, Description = "Such comment does not exist" };
+                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Comment not found", "Such comment does not exist");
 
             _unitOfWork.Repository<Comment>().DeleteById(commentId);
             _unitOfWork.SaveChanges();
@@ -116,7 +118,7 @@ namespace Techgen.Services.Services
             var post = _unitOfWork.Repository<Post>().GetById(postId);
 
             if (post == null)
-                return new BaseResponse<IEnumerable<CommentResponseModel>>() {StatusCode = System.Net.HttpStatusCode.NotFound, Description = "That post does not exist"};
+                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Post not found","That post does not exist");
 
             var response = _mapper.Map<IEnumerable<CommentResponseModel>>(post.Comments);
             return new BaseResponse<IEnumerable<CommentResponseModel>>() {Data=response, StatusCode = System.Net.HttpStatusCode.OK};
@@ -130,7 +132,7 @@ namespace Techgen.Services.Services
                                                            .FirstOrDefault();
 
             if (comment == null)
-                return new BaseResponse<CommentResponseModel>() { StatusCode = System.Net.HttpStatusCode.NotFound, Description = "that comment does not exist" };
+                throw new CustomException(System.Net.HttpStatusCode.NotFound, "Comment not found" ,"that comment does not exist" );
 
             var authorUserName = comment.User.UserName;
 

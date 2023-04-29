@@ -26,4 +26,5 @@ RUN dotnet publish "Techgen.csproj" -c Release -o /app/publish /p:UseAppHost=fal
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+COPY TechGen.db /app
 ENTRYPOINT ["dotnet", "Techgen.dll"]
